@@ -1,0 +1,101 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+def build(bld):
+    obj = bld.create_ns3_module('wran', ['wimax'])
+    obj.source = [
+            'model/wran-net-device.cc',
+            'model/wran-mac-header.cc',
+            'model/wran-phy.cc',
+            'model/wran-channel.cc',
+            'model/wran-connection.cc',
+            'model/wran-mac-queue.cc',
+            'model/wran-bandwidth-manager.cc',
+            'model/wran-burst-profile-manager.cc',
+            'model/wran-tlv.cc',
+            'model/wran-mac-to-mac-header.cc',
+            'model/wran-bs-net-device.cc',
+            'model/wran-ss-net-device.cc',
+            'model/simple-ofdm-wran-channel.cc',
+            'model/simple-ofdm-wran-phy.cc',
+            'model/wran-simple-ofdm-send-param.cc',
+            'model/wran-bs-link-manager.cc',
+            'model/wran-ss-link-manager.cc',
+            'model/wran-ss-scheduler.cc',
+            'model/wran-service-flow.cc',
+            'model/wran-service-flow-manager.cc',
+            'model/wran-service-flow-record.cc',
+            'model/wran-bs-service-flow-manager.cc',
+            'model/wran-ss-service-flow-manager.cc',
+            'model/wran-ss-manager.cc',
+            'model/wran-ss-record.cc',
+            'model/wran-connection-manager.cc',
+            'model/wran-mac-messages.cc',
+            'model/wran-cid.cc',
+            'model/wran-bs-scheduler.cc',
+			'model/wran-bs-scheduler-rtps.cc',
+			'model/wran-bs-scheduler-simple.cc',
+			'model/wran-bs-uplink-scheduler.cc',
+			'model/wran-bs-uplink-scheduler-mbqos.cc',
+			'model/wran-bs-uplink-scheduler-rtps.cc',
+			'model/wran-bs-uplink-scheduler-simple.cc',
+			'model/wran-ul-job.cc',
+			'model/wran-ipcs-classifier.cc',
+			'model/wran-ipcs-classifier-record.cc',
+			'model/wran-cs-parameters.cc',
+            'helper/wran-helper.cc',
+		            ]
+
+    obj_test = bld.create_ns3_module_test_library('wran')
+    obj_test.source = [
+            'test/wran-tlv-test.cc',
+            'test/mac-messages-test.cc',
+            'test/wran-service-flow-test.cc',
+            'test/ss-mac-test.cc',
+            'test/phy-test.cc',
+            'test/qos-test.cc',
+            'test/wran-fragmentation-test.cc',
+            ]
+		            
+    headers = bld(features='ns3header')
+    headers.module = 'wran'
+    headers.source = [
+            'model/wran-channel.h',
+            'model/wran-net-device.h',
+            'model/wran-connection.h',
+            'model/wran-phy.h',
+            'model/wran-mac-header.h',
+            'model/wran-mac-queue.h',
+            'model/wran-tlv.h',
+            'model/wran-mac-to-mac-header.h',
+            'model/wran-bs-net-device.h',
+            'model/wran-ss-net-device.h',
+            'model/simple-ofdm-wran-phy.h',
+            'model/simple-ofdm-wran-channel.h',
+            'model/wran-simple-ofdm-send-param.h',
+            'model/wran-service-flow.h',
+            'model/wran-service-flow-manager.h',
+            'model/wran-service-flow-record.h',
+            'model/wran-bs-service-flow-manager.h',
+            'model/wran-ss-service-flow-manager.h',
+            'model/wran-ss-manager.h',
+            'model/wran-ss-record.h',
+            'model/wran-connection-manager.h',
+            'model/wran-mac-messages.h',
+            'model/wran-cid.h',
+            'model/wran-bs-scheduler.h',
+			'model/wran-bs-scheduler-rtps.h',
+			'model/wran-bs-scheduler-simple.h',
+			'model/wran-bs-uplink-scheduler.h',
+			'model/wran-bs-uplink-scheduler-mbqos.h',
+			'model/wran-bs-uplink-scheduler-rtps.h',
+			'model/wran-bs-uplink-scheduler-simple.h',
+			'model/wran-ul-job.h',
+			'model/wran-ipcs-classifier.h',
+			'model/wran-ipcs-classifier-record.h',
+			'model/wran-cs-parameters.h',
+            'helper/wran-helper.h',
+		            ]
+
+    if bld.env['ENABLE_EXAMPLES']:
+        bld.recurse('examples')
+
+    bld.ns3_python_bindings()

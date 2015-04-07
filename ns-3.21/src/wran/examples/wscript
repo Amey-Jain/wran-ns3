@@ -1,0 +1,11 @@
+7## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    obj = bld.create_ns3_program( 'wran-ipv4', ['wran', 'internet', 'mobility', 'csma', 'applications'])
+    obj.source = 'wran-ipv4.cc'
+
+    obj = bld.create_ns3_program( 'wran-multicast', ['wran', 'internet', 'csma', 'applications'])
+    obj.source = 'wran-multicast.cc'
+        
+    obj = bld.create_ns3_program( 'wran-simple', ['wran', 'internet', 'mobility', 'applications'])
+    obj.source = 'wran-simple.cc'
