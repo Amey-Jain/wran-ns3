@@ -1,6 +1,6 @@
-# project ns (3.21) configured on Tue Apr  7 17:50:13 2015 by
+# project ns (3.21) configured on Wed Apr 15 18:01:57 2015 by
 # waf 1.7.13 (abi 98, python 20708f0 on linux2)
-# using ./waf configure
+# using ./waf --enable-example --enable-test configure
 #
 ----------------------------------------
 Setting top to
@@ -211,7 +211,7 @@ from /home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/bindings/python: Test d
     raise Errors.BuildError(self.producer.error)
 BuildError: Build failed
  -> task in 'testprog' failed (exit status 1): 
-	{task 3067190700L: cxx test.cc -> test.cc.1.o}
+	{task 3067501996L: cxx test.cc -> test.cc.1.o}
 ['/usr/bin/g++', '-O0', '-ggdb', '-g3', '-Wall', '-Werror', '-DNS3_ASSERT_ENABLE', '-DNS3_LOG_ENABLE', '-DPYTHONDIR="/usr/local/lib/python2.7/dist-packages"', '-DPYTHONARCHDIR="/usr/local/lib/python2.7/dist-packages"', '-DHAVE_PYTHON_H=1', '../test.cc', '-c', '-o', 'test.cc.1.o']
 
 ------------------------------------------------------------------------------------------------
@@ -376,7 +376,7 @@ from /home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/src/core: Test does not
     raise Errors.BuildError(self.producer.error)
 BuildError: Build failed
  -> task in 'testprog' failed (exit status 1): 
-	{task 3067340940L: cxx test.cpp -> test.cpp.1.o}
+	{task 3067659084L: cxx test.cpp -> test.cpp.1.o}
 ['/usr/bin/g++', '-O0', '-ggdb', '-g3', '-Wall', '-Werror', '-DNS3_ASSERT_ENABLE', '-DNS3_LOG_ENABLE', '../test.cpp', '-c', '-o', 'test.cpp.1.o']
 
 not found
@@ -418,7 +418,7 @@ from /home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/src/core: Test does not
     raise Errors.BuildError(self.producer.error)
 BuildError: Build failed
  -> task in 'testprog' failed (exit status 1): 
-	{task 3067342828L: cxx test.cpp -> test.cpp.1.o}
+	{task 3067662316L: cxx test.cpp -> test.cpp.1.o}
 ['/usr/bin/g++', '-O0', '-ggdb', '-g3', '-Wall', '-Werror', '-DNS3_ASSERT_ENABLE', '-DNS3_LOG_ENABLE', '../test.cpp', '-c', '-o', 'test.cpp.1.o']
 
 not found
@@ -488,7 +488,7 @@ from /home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/src/core: Test does not
     raise Errors.BuildError(self.producer.error)
 BuildError: Build failed
  -> task in 'testprog' failed (exit status 1): 
-	{task 3067200044L: cxx test.cpp -> test.cpp.1.o}
+	{task 3067515788L: cxx test.cpp -> test.cpp.1.o}
 ['/usr/bin/g++', '-O0', '-ggdb', '-g3', '-Wall', '-Werror', '-DNS3_ASSERT_ENABLE', '-DNS3_LOG_ENABLE', '-DINT64X64_USE_CAIRO=1', '-DHAVE_STDINT_H=1', '-DHAVE_INTTYPES_H=1', '../test.cpp', '-c', '-o', 'test.cpp.1.o']
 
 not found
@@ -665,7 +665,7 @@ from /home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/src/core: Test does not
     raise Errors.BuildError(self.producer.error)
 BuildError: Build failed
  -> task in 'testprog' failed (exit status 1): 
-	{task 3047982156L: cxx test.cpp -> test.cpp.1.o}
+	{task 3057809676L: cxx test.cpp -> test.cpp.1.o}
 ['/usr/bin/g++', '-O0', '-ggdb', '-g3', '-Wall', '-Werror', '-DNS3_ASSERT_ENABLE', '-DNS3_LOG_ENABLE', '-DINT64X64_USE_CAIRO=1', '-DHAVE_SYS_TYPES_H=1', '-DHAVE_SYS_STAT_H=1', '-DHAVE_DIRENT_H=1', '-DHAVE_STDLIB_H=1', '-DHAVE_GETENV=1', '-DHAVE_SIGNAL_H=1', '-DHAVE_PTHREAD_H=1', '-DHAVE_STDINT_H=1', '-DHAVE_INTTYPES_H=1', '../test.cpp', '-c', '-o', 'test.cpp.1.o']
 
 not found

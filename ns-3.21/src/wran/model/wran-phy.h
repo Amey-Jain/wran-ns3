@@ -61,6 +61,9 @@ public:
     SimpleWranPhy, simpleOfdmWranPhy
   };
 
+//  typedef Callback<void> SnsEndedCallback;
+//  typedef Callback<void> HandoffEndedCallback;
+
   static TypeId GetTypeId (void);
   WranPhy (void);
   virtual ~WranPhy (void);
@@ -324,6 +327,18 @@ public:
   */
   virtual int64_t AssignStreams (int64_t stream) = 0;
 
+//  /**
+//     * \param callback the callback to invoke
+//     *        when sensing is ended
+//     */
+//    virtual void SetSenseEndedCallback(SnsEndedCallback callback) = 0;
+//    /**
+//     * \param callback the callback to invoke
+//     *        when sensing is ended
+//     */
+//    virtual void SetHandoffEndedCallback(HandoffEndedCallback callback) = 0;
+  void CallBackChecking(Callback<void, bool, uint64_t> callback);
+  void EndChecking(Callback<void, bool, uint64_t> callback);
 private:
   void GetModulationFecParams (ModulationType modulationType, uint8_t &bitsPerSymbol, double &fecCode) const;
   void EndScanning (void);
@@ -356,6 +371,7 @@ private:
 
   Callback<void, Ptr<const PacketBurst> > m_rxCallback;
   Callback<void, bool, uint64_t> m_scanningCallback;
+  Callback<void, bool, uint64_t> m_callbackChecking;
 
   uint8_t m_nrCarriers;
   Time m_frameDuration; // in seconds

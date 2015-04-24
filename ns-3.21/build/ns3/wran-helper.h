@@ -41,6 +41,10 @@
 #include "ns3/wran-bs-scheduler-rtps.h"
 #include "ns3/trace-helper.h"
 #include "ns3/wran-net-device.h"
+#include "ns3/repository.h"
+#include "ns3/pu-model.h"
+#include "ns3/spectrum-manager.h"
+
 namespace ns3 {
 
 class WranChannel;
@@ -209,10 +213,10 @@ public:
   Ptr<WranPhy> CreatePhyWithoutChannel (PhyType phyType, char * SNRTraceFilePath, bool activateLoss);
 
   /**
-   * \param phyType WiMAX Physical layer type
+   * \param phyType Wran Physical layer type
    * \param SNRTraceFilePath the path to the repository containing the SNR traces files
    * \param activateLoss set to 1 if you want ton activate losses 0 otherwise
-   * \return WiMAX Phy object
+   * \return Wran Phy object
    *
    * Creates a physical layer
    */
@@ -233,7 +237,28 @@ public:
                                PhyType phyType,
                                Ptr<WranChannel> channel,
                                SchedulerType schedulerType);
-
+  /**
+   * \brief Install and create WranNetDevice with puModel and repositoriy
+   * \param repo
+   * \param puModel
+   * \param c
+   * \param deviceType
+   * \param phyType
+   * \param channel
+   * \param schedulerType
+   * \return
+   */
+  NetDeviceContainer Install (Ptr<Repository> repo,
+  								Ptr<PUModel> puModel,
+  								NodeContainer c,
+                                NetDeviceType deviceType,
+                                PhyType phyType,
+                                SchedulerType schedulerType);
+ /**
+  * \return The Spectrum Manager.
+  */
+  Ptr<SpectrumManager> GetSpectrumManager (void);
+//  SpectrumManager* GetSpectrumManager (void);
   /**
    * \brief Creates a transport service flow.
    * \param direction the direction of the service flow: UP or DOWN.
@@ -308,6 +333,8 @@ private:
                                     bool explicitFilename);
 
   Ptr<WranChannel> m_channel;
+  Ptr<SpectrumManager> m_spectrumManager;
+//  SpectrumManager* m_spectrumManager;
 };
 
 } // namespace ns3

@@ -1,6 +1,6 @@
 ## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 def build(bld):
-    obj = bld.create_ns3_module('wran', ['wimax'])
+    obj = bld.create_ns3_module('wran', ['wimax', 'netanim'])
     obj.source = [
             'model/wran-net-device.cc',
             'model/wran-mac-header.cc',
@@ -41,18 +41,20 @@ def build(bld):
 			'model/wran-ipcs-classifier.cc',
 			'model/wran-ipcs-classifier-record.cc',
 			'model/wran-cs-parameters.cc',
+			'model/repository.cc',
+        	'model/pu-model.cc',
+        	'model/spectrum-data.cc',
+        	'model/spectrum-manager.cc',
+        	'model/spectrum-decision.cc',
+        	'model/spectrum-sensing.cc',
+        	'model/cognitive-packet-tags.cc',
             'helper/wran-helper.cc',
 		            ]
 
     obj_test = bld.create_ns3_module_test_library('wran')
     obj_test.source = [
-            'test/wran-tlv-test.cc',
-            'test/mac-messages-test.cc',
-            'test/wran-service-flow-test.cc',
-            'test/ss-mac-test.cc',
+    		'test/mac-messages-test.cc',
             'test/phy-test.cc',
-            'test/qos-test.cc',
-            'test/wran-fragmentation-test.cc',
             ]
 		            
     headers = bld(features='ns3header')
@@ -92,6 +94,14 @@ def build(bld):
 			'model/wran-ipcs-classifier.h',
 			'model/wran-ipcs-classifier-record.h',
 			'model/wran-cs-parameters.h',
+			'model/repository.h',
+       		'model/pu-model.h',
+        	'model/spectrum-data.h',
+        	'model/spectrum-manager.h',
+        	'model/spectrum-decision.h',
+        	'model/spectrum-sensing.h',
+        	'model/common-cognitive-header.h',
+        	'model/cognitive-packet-tags.h',
             'helper/wran-helper.h',
 		            ]
 

@@ -28,6 +28,7 @@
 #include "ns3/log.h"
 #include "ns3/pointer.h"
 #include "ns3/enum.h"
+#include "common-cognitive-header.h"
 #include "wran-burst-profile-manager.h"
 #include "wran-service-flow-manager.h"
 
@@ -147,8 +148,8 @@ WranSSLinkManager::StartScanning (
       m_dlChnlNr++;
     }
 
-  // using max number of channel according to according to Section 8.5.1 of IEEE 802.16-2004 standard.
-  if (m_dlChnlNr >= 200)
+  // using max number of channel 23
+  if (m_dlChnlNr >= MAX_CHANNELS)
     {
       m_dlChnlNr = 0;
     }
@@ -163,6 +164,7 @@ WranSSLinkManager::StartScanning (
 void
 WranSSLinkManager::EndScanning (bool status, uint64_t frequency)
 {
+	NS_LOG_DEBUG("EndScanning in ss-link-manager");
   if (status)
     {
       StartSynchronizing ();

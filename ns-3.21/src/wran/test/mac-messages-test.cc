@@ -35,8 +35,8 @@
 #include "ns3/mobility-helper.h"
 #include "ns3/global-route-manager.h"
 #include "ns3/wran-tlv.h"
-#include "ns3/ipcs-classifier-record.h"
-#include "ns3/service-flow.h"
+#include "ns3/wran-ipcs-classifier-record.h"
+#include "ns3/wran-service-flow.h"
 #include <iostream>
 
 using namespace ns3;
@@ -66,14 +66,14 @@ DsaRequestTestCase::~DsaRequestTestCase ()
 void
 DsaRequestTestCase::DoRun (void)
 {
-  IpcsClassifierRecord classifier = IpcsClassifierRecord ();
+  WranIpcsClassifierRecord classifier = WranIpcsClassifierRecord ();
   CsParameters csParam (CsParameters::ADD, classifier);
-  ServiceFlow sf = ServiceFlow (ServiceFlow::SF_DIRECTION_DOWN);
+  WranServiceFlow sf = WranServiceFlow (WranServiceFlow::SF_DIRECTION_DOWN);
 
   sf.SetSfid (100);
   sf.SetConvergenceSublayerParam (csParam);
-  sf.SetCsSpecification (ServiceFlow::IPV4);
-  sf.SetServiceSchedulingType (ServiceFlow::SF_TYPE_UGS);
+  sf.SetCsSpecification (WranServiceFlow::IPV4);
+  sf.SetServiceSchedulingType (WranServiceFlow::SF_TYPE_UGS);
   sf.SetMaxSustainedTrafficRate (1000000);
   sf.SetMinReservedTrafficRate (1000000);
   sf.SetMinTolerableTrafficRate (1000000);
@@ -88,12 +88,12 @@ DsaRequestTestCase::DoRun (void)
   DsaReq dsaReqRecv;
   packet->RemoveHeader (dsaReqRecv);
 
-  ServiceFlow sfRecv = dsaReqRecv.GetServiceFlow ();
+  WranServiceFlow sfRecv = dsaReqRecv.GetWranServiceFlow ();
 
-  NS_TEST_ASSERT_MSG_EQ (sfRecv.GetDirection (), ServiceFlow::SF_DIRECTION_DOWN, "The sfRecv had the wrong direction.");
+  NS_TEST_ASSERT_MSG_EQ (sfRecv.GetDirection (), WranServiceFlow::SF_DIRECTION_DOWN, "The sfRecv had the wrong direction.");
   NS_TEST_ASSERT_MSG_EQ (sfRecv.GetSfid (), 100, "The sfRecv had the wrong sfid.");
-  NS_TEST_ASSERT_MSG_EQ (sfRecv.GetCsSpecification (), ServiceFlow::IPV4, "The sfRecv had the wrong cs specification.");
-  NS_TEST_ASSERT_MSG_EQ (sfRecv.GetServiceSchedulingType (), ServiceFlow::SF_TYPE_UGS, "The sfRecv had the wrong service scheduling type.");
+  NS_TEST_ASSERT_MSG_EQ (sfRecv.GetCsSpecification (), WranServiceFlow::IPV4, "The sfRecv had the wrong cs specification.");
+  NS_TEST_ASSERT_MSG_EQ (sfRecv.GetServiceSchedulingType (), WranServiceFlow::SF_TYPE_UGS, "The sfRecv had the wrong service scheduling type.");
   NS_TEST_ASSERT_MSG_EQ (sfRecv.GetMaxSustainedTrafficRate (), 1000000, "The sfRecv had the wrong maximum sustained traffic rate.");
   NS_TEST_ASSERT_MSG_EQ (sfRecv.GetMinReservedTrafficRate (), 1000000, "The sfRecv had the wrong minimum reserved traffic rate.");
   NS_TEST_ASSERT_MSG_EQ (sfRecv.GetMinTolerableTrafficRate (), 1000000, "The sfRecv had the wrong minimum tolerable traffic rate.");

@@ -43,6 +43,7 @@
 #include "wran-connection-manager.h"
 #include "wran-bs-link-manager.h"
 #include "wran-bandwidth-manager.h"
+#include "common-cognitive-header.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/llc-snap-header.h"
 
@@ -507,14 +508,64 @@ WranBaseStationNetDevice::Start (void)
   m_symbolDuration = GetPhy ()->GetSymbolDuration ();
   GetWranBandwidthManager ()->SetSubframeRatio ();
 
+  SetTotalChannels(MAX_CHANNELS);
   CreateDefaultConnections ();
-  GetPhy ()->SetSimplex (m_linkManager->SelectDlChannel ());
-  Simulator::ScheduleNow (&WranBaseStationNetDevice::StartFrame, this);
+//  GetPhy ()->SetSimplex (m_linkManager->SelectDlChannel ());
+//  will hande send and receive manually
+//  Simulator::ScheduleNow (&WranBaseStationNetDevice::StartFrame, this);
+  GetPhy ()->SetSimplex (GetChannel(0));
+//  Simulator::ScheduleNow (&WranBaseStationNetDevice::SendCustomMessage, this);
 
   /* shall actually be 2 symbols = 1 (preamble) + 1 (bandwidth request header)*/
   m_bwReqOppSize = 6;
   m_uplinkScheduler->InitOnce ();
 }
+
+void
+WranBaseStationNetDevice::SendCustomMessage (void)
+{
+	Simulator::ScheduleNow (&WranBaseStationNetDevice::ScheduleNextBroadcast, this, 0);
+}
+
+void WranBaseStationNetDevice::ScheduleNextBroadcast(int nr_channel){
+	if(nr_channel >= GetTotalChannels()) {
+
+		Simulator::ScheduleNow (&WranBaseStationNetDevice::EndSendCustomMessage, this);
+		return;
+	}
+	GetPhy ()->SetSimplex (GetChannel(nr_channel)); // lock frequency
+	NS_LOG_INFO("=============== Initiate broadcast in channel from BS: " << GetPhy()->GetTxFrequency() << "=====================");
+
+	Ptr<PacketBurst> burst = Create<PacketBurst> ();
+
+	std::stringstream sstream;
+	std::string sentMessage;
+	sstream << "Hi from bs" << PACKET_SEPARATOR << nr_channel << PACKET_SEPARATOR ;
+	sentMessage = sstream.str();
+	NS_LOG_INFO("sent message from bs: " << sentMessage);
+	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
+	burst->AddPacket (packet);
+
+	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
+
+
+	uint8_t numberOfChannel = 10;
+	double freqChangeIntervalInSeconds = 1.0 / numberOfChannel;
+	Time freqChangeInterval;
+	freqChangeInterval = Seconds(freqChangeIntervalInSeconds);
+
+	Simulator::Schedule (freqChangeInterval,
+	                                   &WranBaseStationNetDevice::ScheduleNextBroadcast,
+	                                   this,
+	                                   nr_channel + 1);
+}
+
+void
+WranBaseStationNetDevice::EndSendCustomMessage (void)
+{
+	NS_LOG_INFO("End Send Custom Message");
+}
+
 
 void
 WranBaseStationNetDevice::Stop (void)
@@ -531,7 +582,7 @@ WranBaseStationNetDevice::StartFrame (void)
 
   m_frameStartTime = Simulator::Now ();
 
-  NS_LOG_INFO ("----------------------frame" << GetNrFrames () + 1 << "----------------------");
+//  NS_LOG_INFO ("----------------------frame" << GetNrFrames () + 1 << "----------------------");
 
   StartDlSubFrame ();
 }
@@ -541,7 +592,7 @@ WranBaseStationNetDevice::StartDlSubFrame (void)
 {
   m_dlSubframeStartTime = Simulator::Now (); // same as m_frameStartTime
 
-  NS_LOG_DEBUG ("DL frame started : " << m_frameStartTime.GetSeconds ());
+//  NS_LOG_DEBUG ("DL frame started : " << m_frameStartTime.GetSeconds ());
 
   SetNrFrames (GetNrFrames () + 1);
   SetState (BS_STATE_DL_SUB_FRAME);
@@ -568,7 +619,7 @@ WranBaseStationNetDevice::StartUlSubFrame (void)
 {
   m_ulSubframeStartTime = Simulator::Now ();
 
-  NS_LOG_INFO ("UL frame started : " << m_ulSubframeStartTime.GetSeconds ());
+//  NS_LOG_INFO ("UL frame started : " << m_ulSubframeStartTime.GetSeconds ());
 
   SetState (BS_STATE_UL_SUB_FRAME);
   m_direction = DIRECTION_UPLINK;
@@ -661,207 +712,219 @@ WranBaseStationNetDevice::Enqueue (Ptr<Packet> packet, const MacHeaderType &hdrT
 void
 WranBaseStationNetDevice::DoReceive (Ptr<Packet> packet)
 {
-  GenericMacHeader gnrcMacHdr;
-  BandwidthRequestHeader bwRequestHdr;
-  WranManagementMessageType msgType;
-  RngReq rngReq;
-  Cid cid;
-  uint8_t type = 0;
-  GrantManagementSubheader grantMgmntSubhdr;
-  Mac48Address source;
-  LlcSnapHeader llc;
-  Ptr<WranConnection> connection = 0;
-  FragmentationSubheader fragSubhdr;
-  bool fragmentation = false;  // it becames true when there is a fragmentation subheader
+	NS_LOG_INFO("Received Packet at BS");
 
-  packet->RemoveHeader (gnrcMacHdr);
-  if (gnrcMacHdr.GetHt () == MacHeaderType::HEADER_TYPE_GENERIC)
-    {
-      if (gnrcMacHdr.check_hcs () == false)
-        {
-          // The header is noisy
-          m_bsRxDropTrace (packet);
-          NS_LOG_INFO ("Header HCS ERROR");
-          return;
-        }
+	uint32_t sz =  packet->GetSize();
+	uint8_t bf[sz+1];
+	packet->CopyData(bf,sz);
 
-      cid = gnrcMacHdr.GetCid ();
-
-      // checking for subheaders (only grant management subheader is implemented)
-      type = gnrcMacHdr.GetType ();
-      if (type)
-        {
-          // checking 1st bit, see Table 6
-          if (type & 1)
-            {
-              packet->RemoveHeader (grantMgmntSubhdr);
-            }
-          // Check if there is a fragmentation Subheader
-          uint8_t tmpType = type;
-          if (((tmpType >> 2) & 1) == 1)
-            {
-              // a TRANSPORT packet with fragmentation subheader has been received!
-              NS_LOG_INFO ("FRAG_DEBUG: DoReceive -> the packet is a fragment" << std::endl);
-              fragmentation = true;
-            }
-        }
-
-      if (cid.IsInitialRanging ()) // initial ranging connection
-        {
-          packet->RemoveHeader (msgType);
-          switch (msgType.GetType ())
-            {
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
-              {
-                packet->RemoveHeader (rngReq);
-                m_linkManager->ProcessRangingRequest (cid, rngReq);
-                break;
-              }
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
-              // from other base station, ignore
-              break;
-            default:
-              NS_FATAL_ERROR ("Invalid message type");
-            }
-        }
-      else if (m_cidFactory->IsBasic (cid)) // basic management connection
-        {
-          source = m_ssManager->GetMacAddress (cid);
-          m_traceBSRx (packet, source, cid);
-          packet->RemoveHeader (msgType);
-          switch (msgType.GetType ())
-            {
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
-              {
-                packet->RemoveHeader (rngReq);
-                m_linkManager->ProcessRangingRequest (cid, rngReq);
-                break;
-              }
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
-              // from other base station, ignore
-              break;
-            default:
-              NS_FATAL_ERROR ("Invalid message type");
-            }
-        }
-      else if (m_cidFactory->IsPrimary (cid)) // primary management connection
-        {
-          source = m_ssManager->GetMacAddress (cid);
-          m_traceBSRx (packet, source, cid);
-          packet->RemoveHeader (msgType);
-          switch (msgType.GetType ())
-            {
-            case WranManagementMessageType::MESSAGE_TYPE_REG_REQ:
-              // not yet implemented
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_REG_RSP:
-              // from other base station, ignore
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_DSA_REQ:
-              {
-                DsaReq dsaReq;
-                packet->RemoveHeader (dsaReq);
-                GetWranServiceFlowManager ()->AllocateWranServiceFlows (dsaReq, cid);
-                break;
-              }
-            case WranManagementMessageType::MESSAGE_TYPE_DSA_RSP:
-
-              /*from other base station, as DSA initiated
-               from BS is not supported, ignore*/
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_DSA_ACK:
-              {
-                Simulator::Cancel (GetWranServiceFlowManager ()->GetDsaAckTimeoutEvent ());
-                DsaAck dsaAck;
-                packet->RemoveHeader (dsaAck);
-                GetWranServiceFlowManager ()->ProcessDsaAck (dsaAck, cid);
-                break;
-              }
-            default:
-              NS_FATAL_ERROR ("Invalid message type");
-            }
-        }
-      else if (cid.IsBroadcast ()) // broadcast connection
-        {
-          // from other base station, ignore
-          // or perhaps data packet (using other protocol) for BS, handle later
-          return;
-        }
-      else // transport connection
-        {
-          // If fragmentation is true, the packet is a fragment.
-          Ptr<Packet> C_Packet = packet->Copy ();
-          if (!fragmentation)
-            {
-              C_Packet->RemoveHeader (llc);
-              source = m_ssManager->GetMacAddress (cid);
-              m_bsRxTrace (packet);
-              ForwardUp (packet->Copy (), source, Mac48Address ("ff:ff:ff:ff:ff:ff"));
-            }
-          else
-            {
-              NS_LOG_INFO ( "FRAG_DEBUG: BS DoReceive, the Packet is a fragment" << std::endl);
-              packet->RemoveHeader (fragSubhdr);
-              uint32_t fc = fragSubhdr.GetFc ();
-              NS_LOG_INFO ("\t fragment size = " << packet->GetSize () << std::endl);
-              if (fc == 2)
-                {
-                  // This is the latest fragment.
-                  // Take the fragment queue, defragment a packet and send it to the upper layer
-                  NS_LOG_INFO ("\t Received the latest fragment" << std::endl);
-                  GetWranConnectionManager ()->GetConnection (cid)
-                  ->FragmentEnqueue (packet);
-                  WranConnection::FragmentsQueue fragmentsQueue = GetWranConnectionManager ()->
-                    GetConnection (cid)->GetFragmentsQueue ();
-                  Ptr<Packet> fullPacket = Create<Packet> ();
-
-                  // DEFRAGMENTATION
-                  NS_LOG_INFO ("\t BS PACKET DEFRAGMENTATION" << std::endl);
-                  for (std::list<Ptr<const Packet> >::const_iterator iter = fragmentsQueue.begin ();
-                       iter != fragmentsQueue.end (); ++iter)
-                    {
-                      // Create the whole Packet
-                      fullPacket->AddAtEnd (*iter);
-                    }
-                  GetWranConnectionManager ()->GetConnection (cid)
-                  ->ClearFragmentsQueue ();
-
-                  NS_LOG_INFO ("\t fullPacket size = " << fullPacket->GetSize () << std::endl);
-                  source = m_ssManager->GetMacAddress (cid);
-                  m_bsRxTrace (fullPacket);
-                  ForwardUp (fullPacket->Copy (), source, Mac48Address ("ff:ff:ff:ff:ff:ff"));
-                }
-              else
-                {
-                  // This is the first or middle fragment.
-                  // Take the fragment queue, store the fragment into the queue
-                  NS_LOG_INFO ("\t Received the first or the middle fragment" << std::endl);
-                  GetWranConnectionManager ()->GetConnection (cid)
-                  ->FragmentEnqueue (packet);
-                }
-            }
-        }
-    }
-  else
-    {
-      // bandwidth request header
-      packet->AddHeader (gnrcMacHdr);
-      packet->RemoveHeader (bwRequestHdr);
-      NS_ASSERT_MSG (bwRequestHdr.GetHt () == MacHeaderType::HEADER_TYPE_BANDWIDTH,
-                     "A bandwidth request should be carried by a bandwidth header type");
-      if (bwRequestHdr.check_hcs () == false)
-        {
-          // The header is noisy
-          NS_LOG_INFO ("BS:Header HCS ERROR");
-          return;
-        }
-      cid = bwRequestHdr.GetCid ();
-      source = m_ssManager->GetMacAddress (cid);
-      m_traceBSRx (packet, source, cid);
-      GetWranBandwidthManager ()->ProcessBandwidthRequest (bwRequestHdr);
-    }
-
+	std::string ms((char *)bf);
+	NS_LOG_INFO("Received packet message: " << ms);
 }
+//void
+//WranBaseStationNetDevice::DoReceive (Ptr<Packet> packet)
+//{
+//  GenericMacHeader gnrcMacHdr;
+//  BandwidthRequestHeader bwRequestHdr;
+//  WranManagementMessageType msgType;
+//  RngReq rngReq;
+//  Cid cid;
+//  uint8_t type = 0;
+//  GrantManagementSubheader grantMgmntSubhdr;
+//  Mac48Address source;
+//  LlcSnapHeader llc;
+//  Ptr<WranConnection> connection = 0;
+//  FragmentationSubheader fragSubhdr;
+//  bool fragmentation = false;  // it becames true when there is a fragmentation subheader
+//
+//  packet->RemoveHeader (gnrcMacHdr);
+//  if (gnrcMacHdr.GetHt () == MacHeaderType::HEADER_TYPE_GENERIC)
+//    {
+//      if (gnrcMacHdr.check_hcs () == false)
+//        {
+//          // The header is noisy
+//          m_bsRxDropTrace (packet);
+//          NS_LOG_INFO ("Header HCS ERROR");
+//          return;
+//        }
+//
+//      cid = gnrcMacHdr.GetCid ();
+//
+//      // checking for subheaders (only grant management subheader is implemented)
+//      type = gnrcMacHdr.GetType ();
+//      if (type)
+//        {
+//          // checking 1st bit, see Table 6
+//          if (type & 1)
+//            {
+//              packet->RemoveHeader (grantMgmntSubhdr);
+//            }
+//          // Check if there is a fragmentation Subheader
+//          uint8_t tmpType = type;
+//          if (((tmpType >> 2) & 1) == 1)
+//            {
+//              // a TRANSPORT packet with fragmentation subheader has been received!
+//              NS_LOG_INFO ("FRAG_DEBUG: DoReceive -> the packet is a fragment" << std::endl);
+//              fragmentation = true;
+//            }
+//        }
+//
+//      if (cid.IsInitialRanging ()) // initial ranging connection
+//        {
+//          packet->RemoveHeader (msgType);
+//          switch (msgType.GetType ())
+//            {
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
+//              {
+//                packet->RemoveHeader (rngReq);
+//                m_linkManager->ProcessRangingRequest (cid, rngReq);
+//                break;
+//              }
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
+//              // from other base station, ignore
+//              break;
+//            default:
+//              NS_FATAL_ERROR ("Invalid message type");
+//            }
+//        }
+//      else if (m_cidFactory->IsBasic (cid)) // basic management connection
+//        {
+//          source = m_ssManager->GetMacAddress (cid);
+//          m_traceBSRx (packet, source, cid);
+//          packet->RemoveHeader (msgType);
+//          switch (msgType.GetType ())
+//            {
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
+//              {
+//                packet->RemoveHeader (rngReq);
+//                m_linkManager->ProcessRangingRequest (cid, rngReq);
+//                break;
+//              }
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
+//              // from other base station, ignore
+//              break;
+//            default:
+//              NS_FATAL_ERROR ("Invalid message type");
+//            }
+//        }
+//      else if (m_cidFactory->IsPrimary (cid)) // primary management connection
+//        {
+//          source = m_ssManager->GetMacAddress (cid);
+//          m_traceBSRx (packet, source, cid);
+//          packet->RemoveHeader (msgType);
+//          switch (msgType.GetType ())
+//            {
+//            case WranManagementMessageType::MESSAGE_TYPE_REG_REQ:
+//              // not yet implemented
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_REG_RSP:
+//              // from other base station, ignore
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_DSA_REQ:
+//              {
+//                DsaReq dsaReq;
+//                packet->RemoveHeader (dsaReq);
+//                GetWranServiceFlowManager ()->AllocateWranServiceFlows (dsaReq, cid);
+//                break;
+//              }
+//            case WranManagementMessageType::MESSAGE_TYPE_DSA_RSP:
+//
+//              /*from other base station, as DSA initiated
+//               from BS is not supported, ignore*/
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_DSA_ACK:
+//              {
+//                Simulator::Cancel (GetWranServiceFlowManager ()->GetDsaAckTimeoutEvent ());
+//                DsaAck dsaAck;
+//                packet->RemoveHeader (dsaAck);
+//                GetWranServiceFlowManager ()->ProcessDsaAck (dsaAck, cid);
+//                break;
+//              }
+//            default:
+//              NS_FATAL_ERROR ("Invalid message type");
+//            }
+//        }
+//      else if (cid.IsBroadcast ()) // broadcast connection
+//        {
+//          // from other base station, ignore
+//          // or perhaps data packet (using other protocol) for BS, handle later
+//          return;
+//        }
+//      else // transport connection
+//        {
+//          // If fragmentation is true, the packet is a fragment.
+//          Ptr<Packet> C_Packet = packet->Copy ();
+//          if (!fragmentation)
+//            {
+//              C_Packet->RemoveHeader (llc);
+//              source = m_ssManager->GetMacAddress (cid);
+//              m_bsRxTrace (packet);
+//              ForwardUp (packet->Copy (), source, Mac48Address ("ff:ff:ff:ff:ff:ff"));
+//            }
+//          else
+//            {
+//              NS_LOG_INFO ( "FRAG_DEBUG: BS DoReceive, the Packet is a fragment" << std::endl);
+//              packet->RemoveHeader (fragSubhdr);
+//              uint32_t fc = fragSubhdr.GetFc ();
+//              NS_LOG_INFO ("\t fragment size = " << packet->GetSize () << std::endl);
+//              if (fc == 2)
+//                {
+//                  // This is the latest fragment.
+//                  // Take the fragment queue, defragment a packet and send it to the upper layer
+//                  NS_LOG_INFO ("\t Received the latest fragment" << std::endl);
+//                  GetWranConnectionManager ()->GetConnection (cid)
+//                  ->FragmentEnqueue (packet);
+//                  WranConnection::FragmentsQueue fragmentsQueue = GetWranConnectionManager ()->
+//                    GetConnection (cid)->GetFragmentsQueue ();
+//                  Ptr<Packet> fullPacket = Create<Packet> ();
+//
+//                  // DEFRAGMENTATION
+//                  NS_LOG_INFO ("\t BS PACKET DEFRAGMENTATION" << std::endl);
+//                  for (std::list<Ptr<const Packet> >::const_iterator iter = fragmentsQueue.begin ();
+//                       iter != fragmentsQueue.end (); ++iter)
+//                    {
+//                      // Create the whole Packet
+//                      fullPacket->AddAtEnd (*iter);
+//                    }
+//                  GetWranConnectionManager ()->GetConnection (cid)
+//                  ->ClearFragmentsQueue ();
+//
+//                  NS_LOG_INFO ("\t fullPacket size = " << fullPacket->GetSize () << std::endl);
+//                  source = m_ssManager->GetMacAddress (cid);
+//                  m_bsRxTrace (fullPacket);
+//                  ForwardUp (fullPacket->Copy (), source, Mac48Address ("ff:ff:ff:ff:ff:ff"));
+//                }
+//              else
+//                {
+//                  // This is the first or middle fragment.
+//                  // Take the fragment queue, store the fragment into the queue
+//                  NS_LOG_INFO ("\t Received the first or the middle fragment" << std::endl);
+//                  GetWranConnectionManager ()->GetConnection (cid)
+//                  ->FragmentEnqueue (packet);
+//                }
+//            }
+//        }
+//    }
+//  else
+//    {
+//      // bandwidth request header
+//      packet->AddHeader (gnrcMacHdr);
+//      packet->RemoveHeader (bwRequestHdr);
+//      NS_ASSERT_MSG (bwRequestHdr.GetHt () == MacHeaderType::HEADER_TYPE_BANDWIDTH,
+//                     "A bandwidth request should be carried by a bandwidth header type");
+//      if (bwRequestHdr.check_hcs () == false)
+//        {
+//          // The header is noisy
+//          NS_LOG_INFO ("BS:Header HCS ERROR");
+//          return;
+//        }
+//      cid = bwRequestHdr.GetCid ();
+//      source = m_ssManager->GetMacAddress (cid);
+//      m_traceBSRx (packet, source, cid);
+//      GetWranBandwidthManager ()->ProcessBandwidthRequest (bwRequestHdr);
+//    }
+//
+//}
 
 void
 WranBaseStationNetDevice::CreateMapMessages (void)
@@ -1218,7 +1281,7 @@ WranBaseStationNetDevice::RangingOppStart (void)
 {
   m_rangingOppNumber++;
 
-  NS_LOG_DEBUG ("Ranging TO " << (uint32_t) m_rangingOppNumber << ": " << Simulator::Now ().GetSeconds ());
+//  NS_LOG_DEBUG ("Ranging TO " << (uint32_t) m_rangingOppNumber << ": " << Simulator::Now ().GetSeconds ());
 }
 
 } // namespace ns3

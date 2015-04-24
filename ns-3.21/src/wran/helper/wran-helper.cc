@@ -35,18 +35,24 @@
 #include "ns3/pointer.h"
 #include "ns3/wran-mac-to-mac-header.h"
 
-
 NS_LOG_COMPONENT_DEFINE ("WranHelper");
 
 namespace ns3 {
 
 WranHelper::WranHelper (void)
-  : m_channel (0)
+  : m_channel (0),
+    m_spectrumManager(NULL)
 {
+//	m_spectrumManager = NULL;
 }
 
 WranHelper::~WranHelper (void)
 {
+//	if (m_spectrumManager != NULL)
+//	  {
+//	    delete m_spectrumManager;
+//	    m_spectrumManager = NULL;
+//	  }
 }
 
 void WranHelper::EnableAsciiForConnection (Ptr<OutputStreamWrapper> os,
@@ -357,6 +363,59 @@ Ptr<WranNetDevice> WranHelper::Install (Ptr<Node> node,
   node->AddDevice (device);
 
   return device;
+}
+
+NetDeviceContainer WranHelper::Install (Ptr<Repository> repo,
+										Ptr<PUModel> puModel,
+										NodeContainer c,
+                                          NetDeviceType deviceType,
+                                          PhyType phyType,
+                                          SchedulerType schedulerType)
+{
+
+	NetDeviceContainer devices;
+	for (NodeContainer::Iterator i = c.Begin (); i != c.End (); i++)
+	{
+	  Ptr<Node> node = *i;
+	  Ptr<WranPhy> phy = CreatePhy (phyType);
+	  Ptr<WranNetDevice> device;
+	  Ptr<WranUplinkScheduler> uplinkScheduler = CreateWranUplinkScheduler (schedulerType);
+	  Ptr<WranBSScheduler> bsScheduler = CreateWranBSScheduler (schedulerType);
+
+	  if (deviceType == DEVICE_TYPE_BASE_STATION)
+		{
+		  Ptr<WranBaseStationNetDevice> deviceBS;
+		  deviceBS = CreateObject<WranBaseStationNetDevice> (node, phy, uplinkScheduler, bsScheduler);
+		  device = deviceBS;
+		  uplinkScheduler->SetBs (deviceBS);
+		  bsScheduler->SetBs (deviceBS);
+		}
+	  else
+		{
+		  device = CreateObject<WranSubscriberStationNetDevice> (node, phy);
+		}
+	  device->SetAddress (Mac48Address::Allocate ());
+	  phy->SetDevice (device);
+	  device->Start ();
+	  device->Attach (m_channel);
+
+	  if (m_spectrumManager == NULL)
+	  {
+//		  m_spectrumManager = new SpectrumManager(device, node->GetId(), Time("10ms"), Time("1s"));
+		  m_spectrumManager = CreateObject<SpectrumManager>(device, node->GetId(), Time("10ms"), Time("1s"));
+		  m_spectrumManager->SetPuModel(0.1, puModel);
+//		  m_spectrumManager->SetRepository(repo);
+//		  m_spectrumManager->Start();
+	  }
+	  node->AddDevice (device);
+
+	  devices.Add (device);
+	}
+  return devices;
+}
+
+Ptr<SpectrumManager> WranHelper::GetSpectrumManager (void) {
+	return m_spectrumManager;
 }
 
 void

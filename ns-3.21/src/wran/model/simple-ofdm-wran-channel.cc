@@ -31,7 +31,10 @@
 #include "simple-ofdm-wran-channel.h"
 #include "ns3/mobility-model.h"
 #include "ns3/cost231-propagation-loss-model.h"
+#include "ns3/itu-r-1411-nlos-over-rooftop-propagation-loss-model.h"
 #include "wran-simple-ofdm-send-param.h"
+#include "common-cognitive-header.h"
+#include <cmath>
 
 NS_LOG_COMPONENT_DEFINE ("simpleOfdmWranChannel");
 
@@ -69,6 +72,10 @@ SimpleOfdmWranChannel::SimpleOfdmWranChannel (PropModel propModel)
       m_loss = CreateObject<Cost231PropagationLossModel> ();
       break;
 
+    case ITU_NLOS_ROOFTOP_PROPAGATION:
+    	m_loss= CreateObject<ItuR1411NlosOverRooftopPropagationLossModel>();
+    	break;
+
     default:
       m_loss = 0;
     }
@@ -95,6 +102,10 @@ SimpleOfdmWranChannel::SetPropagationModel (PropModel propModel)
     case COST231_PROPAGATION:
       m_loss = CreateObject<Cost231PropagationLossModel> ();
       break;
+
+    case ITU_NLOS_ROOFTOP_PROPAGATION:
+		m_loss= CreateObject<ItuR1411NlosOverRooftopPropagationLossModel>();
+		break;
 
     default:
       m_loss = 0;
@@ -144,6 +155,11 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
                               double txPowerDbm,
                               Ptr<PacketBurst> burst)
 {
+	NS_LOG_INFO("From ofdm Channel, txPower " << txPowerDbm);
+	Ptr<FriisPropagationLossModel> frii_loss = DynamicCast<FriisPropagationLossModel> (m_loss);
+	frii_loss->SetFrequency((double)frequency * 1000000.0);
+	NS_LOG_INFO("From ofdm Channel in Watt " << frii_loss->DbmToW(txPowerDbm) << " Freq " << frii_loss->GetFrequency());
+
   double rxPowerDbm = 0;
   Ptr<MobilityModel> senderMobility = 0;
   Ptr<MobilityModel> receiverMobility = 0;
@@ -161,6 +177,7 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
               distance = senderMobility->GetDistanceFrom (receiverMobility);
               delay =  Seconds (distance/300000000.0);
               rxPowerDbm = m_loss->CalcRxPower (txPowerDbm, senderMobility, receiverMobility);
+              if(distance > MAX_TRANSMISSION_RANGE)continue;
             }
 
           param = new WranSimpleOfdmSendParam (burstSize,

@@ -78,13 +78,13 @@ TypeId WranNetDevice::GetTypeId (void)
                    "receive/transmit transition gap.",
                    UintegerValue (0),
                    MakeUintegerAccessor (&WranNetDevice::GetRtg, &WranNetDevice::SetRtg),
-                   MakeUintegerChecker<uint16_t> (0, 120))
+                   MakeUintegerChecker<uint16_t> (0, 210)) // previosly 120
 
     .AddAttribute ("TTG",
                    "transmit/receive transition gap.",
                    UintegerValue (0),
                    MakeUintegerAccessor (&WranNetDevice::GetTtg, &WranNetDevice::SetTtg),
-                   MakeUintegerChecker<uint16_t> (0, 120))
+                   MakeUintegerChecker<uint16_t> (0, 210)) // previosly 120
 
     .AddAttribute ("WranConnectionManager",
                    "The connection manager attached to this device.",
@@ -572,6 +572,7 @@ WranNetDevice::SupportsSendFrom (void) const
 void
 WranNetDevice::ForwardDown (Ptr<PacketBurst> burst, WranPhy::ModulationType modulationType)
 {
+	NS_LOG_INFO("From ForwardDown");
   SendParams * params = new OfdmSendParams (burst, modulationType, m_direction);
   m_phy->Send (params);
   delete params;
@@ -605,7 +606,7 @@ WranNetDevice::InitializeChannels (void)
   for (uint8_t i = 0; i < 24; i++)
     {
       m_dlChannels.push_back (frequency);
-      frequency += 6;
+      frequency += 6; // m_phy->GetChannelBandwidth();
     }
 }
 
@@ -651,5 +652,12 @@ WranNetDevice::AddLinkChangeCallback (Callback<void> callback)
    * to flush NDISC cache whenever the link goes up.
    */
   NS_FATAL_ERROR ("Not implemented-- please implement and contribute a patch");
+}
+
+uint8_t WranNetDevice::GetTotalChannels (void){
+	return totalChannels;
+}
+void WranNetDevice::SetTotalChannels (uint8_t t_channels){
+	totalChannels = t_channels;
 }
 } // namespace ns3

@@ -124,13 +124,65 @@ WranPhy::GetDevice (void) const
 }
 
 void
+WranPhy::CallBackChecking(Callback<void, bool, uint64_t> callback) {
+	NS_LOG_INFO("Calling from here");
+	Simulator::Schedule (Time("10ms"), &WranPhy::EndChecking, this, callback);
+	m_scanningCallback = callback;
+//	m_scanningCallback(false, 1000);
+}
+
+void WranPhy::EndChecking(Callback<void, bool, uint64_t> callback){
+	callback(false, 1000);
+}
+
+void
 WranPhy::StartScanning (uint64_t frequency, Time timeout, Callback<void, bool, uint64_t> callback)
 {
+//	NS_ASSERT (/*!IsStateSwitching () &&*/ GetState() != WranPhy::PHY_STATE_SCANNING );
+	  switch (m_state)
+	    {
+	    case WranPhy::PHY_STATE_RX:
+	      NS_LOG_DEBUG ("channel sensing postponed until end of current reception");
+	      Simulator::Schedule (/*GetDelayUntilIdle ()*/ Time("3s"), &WranPhy::StartScanning, this, frequency, timeout, callback);
+	      /**
+	       * Rationale about 0.1s dealy:
+	       * Packet size is 10ms. probably 10ms later transmit/receive will end.
+	       * If not it will wait for another 10ms
+	       */
+	      break;
+	    case WranPhy::PHY_STATE_TX:
+	      NS_LOG_DEBUG ("channel sensing postponed until end of current transmission");
+	      Simulator::Schedule (/*GetDelayUntilIdle ()*/ Time("3s"), &WranPhy::StartScanning, this, frequency, timeout, callback);
+	      break;
+	    case WranPhy::PHY_STATE_IDLE:
+//	    	NS_LOG_INFO("phy IDLE State with freq: " << frequency);
+	      goto startSensing;
+	      break;
+	    case WranPhy::PHY_STATE_SCANNING:
+//	    	NS_LOG_INFO("phy Scanning State with freq: " << frequency);
+	    	goto startSensing;
+	    	break;
+	    default:
+	      NS_ASSERT (false);
+	      break;
+	    }
+
+	  return;
+
+startSensing:
+
+//	  NS_LOG_DEBUG ("sensing started for duration " << duration);
+//	  m_state->SwitchToChannelSensing (duration);
+//	  m_interference.EraseEvents ();
+//	  Simulator::Schedule (duration, &YansWifiPhy::m_senseEndedCallback, this);
+
+//	NS_LOG_DEBUG("Phy State " << m_state);
   NS_ASSERT_MSG (m_state == PHY_STATE_IDLE || m_state == PHY_STATE_SCANNING,
                  "Error while scanning: The PHY state should be PHY_STATE_SCANNING or PHY_STATE_IDLE");
 
   m_state = PHY_STATE_SCANNING;
   m_scanningFrequency = frequency;
+//  NS_LOG_INFO("Phy scanning timout: " << timeout);
   m_dlChnlSrchTimeoutEvent = Simulator::Schedule (timeout, &WranPhy::EndScanning, this);
   m_scanningCallback = callback;
 }
@@ -138,6 +190,7 @@ WranPhy::StartScanning (uint64_t frequency, Time timeout, Callback<void, bool, u
 void
 WranPhy::EndScanning (void)
 {
+	NS_LOG_INFO("End Scanning called");
   m_scanningCallback (false, m_scanningFrequency);
 }
 

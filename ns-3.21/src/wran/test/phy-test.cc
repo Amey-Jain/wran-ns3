@@ -91,7 +91,7 @@ Ns3WranSimpleOFDMTestCase::DoRunOnce (double FrameDuration)
   Simulator::Run ();
   for (int i = 0; i < 3; i++)
     {
-      if (ssDevs.Get (i)->GetObject<SubscriberStationNetDevice> ()->IsRegistered ()
+      if (ssDevs.Get (i)->GetObject<WranSubscriberStationNetDevice> ()->IsRegistered ()
           == false)
         {
           NS_LOG_DEBUG ("SS[" << i << "] not registered");

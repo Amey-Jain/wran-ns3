@@ -27,6 +27,10 @@
 #include "wran-phy.h"
 #include "ns3/packet-burst.h"
 #include <algorithm>
+#include <cstring>
+#include <string>
+#include <iostream>
+#include <sstream>
 #include "ns3/dl-mac-messages.h"
 #include "ns3/ul-mac-messages.h"
 #include "wran-ss-scheduler.h"
@@ -41,6 +45,7 @@
 #include "wran-burst-profile-manager.h"
 #include "wran-ss-link-manager.h"
 #include "wran-bandwidth-manager.h"
+#include "common-cognitive-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("WranSubscriberStationNetDevice");
 
@@ -557,8 +562,11 @@ WranSubscriberStationNetDevice::Start (void)
   GetPhy ()->SetDataRates ();
   m_intervalT20 = Seconds (4 * GetPhy ()->GetFrameDuration ().GetSeconds ());
 
+  SetTotalChannels(10);
   CreateDefaultConnections ();
-  Simulator::ScheduleNow (&WranSSLinkManager::StartScanning, m_linkManager, EVENT_NONE, false);
+  GetPhy()->SetSimplex(GetChannel(0));
+// Will manually control in which channel it will send and receive
+//  Simulator::ScheduleNow (&WranSSLinkManager::StartScanning, m_linkManager, EVENT_NONE, false);
 }
 
 void
@@ -734,329 +742,358 @@ WranSubscriberStationNetDevice::SendBurst (uint8_t uiuc,
 void
 WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 {
-  GenericMacHeader gnrcMacHdr;
-  WranManagementMessageType msgType;
-  RngRsp rngrsp;
-  Cid cid;
-  uint32_t pktSize = packet->GetSize ();
-  packet->RemoveHeader (gnrcMacHdr);
-  FragmentationSubheader fragSubhdr;
-  bool fragmentation = false;  // it becames true when there is a fragmentation subheader
+	NS_LOG_INFO("~~~~~~~~~Received Packet at SS~~~~~~~~~~");
 
-  if (gnrcMacHdr.GetHt () == MacHeaderType::HEADER_TYPE_GENERIC)
-    {
-      if (gnrcMacHdr.check_hcs () == false)
-        {
-          // The header is noisy
-          NS_LOG_INFO ("Header HCS ERROR");
-          m_ssRxDropTrace (packet);
-          return;
-        }
+	uint32_t sz =  packet->GetSize();
+	uint8_t bf[sz+1];
+	packet->CopyData(bf,sz);
+	bf[sz] = 0;
 
-      cid = gnrcMacHdr.GetCid ();
+	std::string ms((char *)bf);
+	NS_LOG_INFO("Received packet message: " << ms);
 
-      // checking for subheaders
-      uint8_t type = gnrcMacHdr.GetType ();
-      if (type)
-        {
-          // Check if there is a fragmentation Subheader
-          uint8_t tmpType = type;
-          if (((tmpType >> 2) & 1) == 1)
-            {
-              // a TRANSPORT packet with fragmentation subheader has been received!
-              fragmentation = true;
-              NS_LOG_INFO ("SS DoReceive -> the packet is a fragment" <<  std::endl);
-            }
-        }
+	std::istringstream ss(ms);
+	std::string token;
 
-      if (cid == GetBroadcastConnection ()->GetCid () && !fragmentation)
-        {
-          packet->RemoveHeader (msgType);
-          switch (msgType.GetType ())
-            {
-            case WranManagementMessageType::MESSAGE_TYPE_DL_MAP:
-              {
-                if (GetState () == SS_STATE_SYNCHRONIZING)
-                  {
-                    Simulator::Cancel (m_linkManager->GetDlMapSyncTimeoutEvent ());
-                  }
+	int i=0, nr_channel = 0;
+	while(std::getline(ss, token, PACKET_SEPARATOR)) {
+		if(i==1){
+			nr_channel = std::atoi(token.c_str());
+			break;
+		}
+	    i++;
+	}
 
-                if (m_lostDlMapEvent.IsRunning ())
-                  {
-                    Simulator::Cancel (m_lostDlMapEvent);
-                  }
 
-                m_linkManager->ScheduleScanningRestart (m_lostDlMapInterval, EVENT_LOST_DL_MAP, false, m_lostDlMapEvent);
-
-                if (m_dcdWaitTimeoutEvent.IsRunning ())
-                  {
-                    Simulator::Cancel (m_dcdWaitTimeoutEvent);
-                  }
-
-                m_linkManager->ScheduleScanningRestart (m_intervalT1,
-                                                        EVENT_DCD_WAIT_TIMEOUT,
-                                                        false,
-                                                        m_dcdWaitTimeoutEvent);
-
-                if (m_ucdWaitTimeoutEvent.IsRunning ())
-                  {
-                    Simulator::Cancel (m_ucdWaitTimeoutEvent);
-                  }
-
-                m_linkManager->ScheduleScanningRestart (m_intervalT12,
-                                                        EVENT_UCD_WAIT_TIMEOUT,
-                                                        true,
-                                                        m_ucdWaitTimeoutEvent);
-
-                DlMap dlmap;
-                packet->RemoveHeader (dlmap);
-                ProcessDlMap (dlmap);
-                break;
-              }
-            case WranManagementMessageType::MESSAGE_TYPE_UL_MAP:
-              {
-                if (m_lostUlMapEvent.IsRunning ())
-                  {
-                    Simulator::Cancel (m_lostUlMapEvent);
-                    m_linkManager->ScheduleScanningRestart (m_lostUlMapInterval,
-                                                            EVENT_LOST_UL_MAP,
-                                                            true,
-                                                            m_lostUlMapEvent);
-                  }
-
-                UlMap ulmap;
-                packet->RemoveHeader (ulmap);
-
-                ProcessUlMap (ulmap);
-
-                if (GetState () == SS_STATE_WAITING_REG_RANG_INTRVL)
-                  {
-                    if (m_linkManager->GetRangingIntervalFound ())
-                      {
-                        if (m_rangOppWaitTimeoutEvent.IsRunning ())
-                          {
-                            Simulator::Cancel (m_rangOppWaitTimeoutEvent);
-                          }
-                        m_linkManager->PerformBackoff ();
-                      }
-                  }
-                break;
-              }
-            case WranManagementMessageType::MESSAGE_TYPE_DCD:
-              {
-                if (GetState () == SS_STATE_SYNCHRONIZING)
-                  {
-                    SetState (SS_STATE_ACQUIRING_PARAMETERS);
-                  }
-
-                if (m_dcdWaitTimeoutEvent.IsRunning ())
-                  {
-                    Simulator::Cancel (m_dcdWaitTimeoutEvent);
-                    m_linkManager->ScheduleScanningRestart (m_intervalT1,
-                                                            EVENT_DCD_WAIT_TIMEOUT,
-                                                            false,
-                                                            m_dcdWaitTimeoutEvent);
-                  }
-
-                Dcd dcd;
-                // number of burst profiles is set to number of DL-MAP IEs after processing DL-MAP, not a very good solution
-                // dcd.SetNrDlBurstProfiles (m_nrDlMapElements);
-                dcd.SetNrDlBurstProfiles (7);
-                packet->RemoveHeader (dcd);
-
-                ProcessDcd (dcd);
-                break;
-              }
-            case WranManagementMessageType::MESSAGE_TYPE_UCD:
-              {
-                Ucd ucd;
-                // number of burst profiles is set to number of UL-MAP IEs after processing UL-MAP, not a very good solution
-                // ucd.SetNrUlBurstProfiles (m_nrUlMapElements);
-                ucd.SetNrUlBurstProfiles (7);
-                packet->RemoveHeader (ucd);
-
-                ProcessUcd (ucd);
-
-                if (m_ucdWaitTimeoutEvent.IsRunning ())
-                  {
-                    Simulator::Cancel (m_ucdWaitTimeoutEvent);
-                    m_linkManager->ScheduleScanningRestart (m_intervalT12,
-                                                            EVENT_UCD_WAIT_TIMEOUT,
-                                                            true,
-                                                            m_ucdWaitTimeoutEvent);
-                  }
-
-                if (GetState () == SS_STATE_ACQUIRING_PARAMETERS)
-                  {
-                    /*state indicating that SS has completed scanning, synchronization and parameter acquisition
-                     successfully and now waiting for UL-MAP to start initial ranging.*/
-                    SetState (SS_STATE_WAITING_REG_RANG_INTRVL);
-
-                    m_linkManager->ScheduleScanningRestart (m_intervalT2,
-                                                            EVENT_RANG_OPP_WAIT_TIMEOUT,
-                                                            false,
-                                                            m_rangOppWaitTimeoutEvent);
-                    m_linkManager->ScheduleScanningRestart (m_lostUlMapInterval,
-                                                            EVENT_LOST_UL_MAP,
-                                                            true,
-                                                            m_lostUlMapEvent);
-                  }
-                break;
-              }
-            default:
-              NS_FATAL_ERROR ("Invalid management message type");
-            }
-        }
-      else if (GetInitialRangingConnection () != 0 && cid == GetInitialRangingConnection ()->GetCid () && !fragmentation)
-        {
-          m_traceSSRx (packet, GetMacAddress (), &cid);
-          packet->RemoveHeader (msgType);
-          switch (msgType.GetType ())
-            {
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
-              // intended for base station, ignore
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
-              NS_ASSERT_MSG (SS_STATE_WAITING_RNG_RSP,
-                             "SS: Error while receiving a ranging response message: SS state should be SS_STATE_WAITING_RNG_RSP");
-              packet->RemoveHeader (rngrsp);
-              m_linkManager->PerformRanging (cid, rngrsp);
-              break;
-            default:
-              NS_LOG_ERROR ("Invalid management message type");
-            }
-        }
-      else if (m_basicConnection != 0 && cid == m_basicConnection->GetCid () && !fragmentation)
-        {
-          m_traceSSRx (packet, GetMacAddress (), &cid);
-          packet->RemoveHeader (msgType);
-          switch (msgType.GetType ())
-            {
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
-              // intended for base station, ignore
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
-              NS_ASSERT_MSG (SS_STATE_WAITING_RNG_RSP,
-                             "SS: Error while receiving a ranging response message: SS state should be SS_STATE_WAITING_RNG_RSP");
-              packet->RemoveHeader (rngrsp);
-              m_linkManager->PerformRanging (cid, rngrsp);
-              break;
-            default:
-              NS_LOG_ERROR ("Invalid management message type");
-            }
-        }
-      else if (m_primaryConnection != 0 && cid == m_primaryConnection->GetCid () && !fragmentation)
-        {
-          m_traceSSRx (packet, GetMacAddress (), &cid);
-          packet->RemoveHeader (msgType);
-          switch (msgType.GetType ())
-            {
-            case WranManagementMessageType::MESSAGE_TYPE_REG_REQ:
-              // not yet implemented
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_REG_RSP:
-              // intended for base station, ignore
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_DSA_REQ:
-              /*from other station as DSA initiation
-               by BS is not supported, ignore*/
-              break;
-            case WranManagementMessageType::MESSAGE_TYPE_DSA_RSP:
-              {
-                Simulator::Cancel (GetWranServiceFlowManager ()->GetDsaRspTimeoutEvent ());
-                DsaRsp dsaRsp;
-                packet->RemoveHeader (dsaRsp);
-                GetWranServiceFlowManager ()->ProcessDsaRsp (dsaRsp);
-                break;
-              }
-            case WranManagementMessageType::MESSAGE_TYPE_DSA_ACK:
-              /*from other station as DSA initiation
-               by BS is not supported, ignore*/
-              break;
-            default:
-              NS_LOG_ERROR ("Invalid management message type");
-            }
-        }
-      else if (GetWranConnectionManager ()->GetConnection (cid)) // transport connection
-        {
-          WranServiceFlow *serviceFlow = GetWranConnectionManager ()->GetConnection (cid)->GetWranServiceFlow ();
-          WranServiceFlowRecord *record = serviceFlow->GetRecord ();
-
-          record->UpdatePktsRcvd (1);
-          record->UpdateBytesRcvd (pktSize);
-
-          // If fragmentation is true, the packet is a fragment.
-          if (!fragmentation)
-            {
-              m_ssRxTrace (packet);
-              ForwardUp (packet, m_baseStationId, GetMacAddress ()); // source shall be BS's address or sender SS's?
-            }
-          else
-            {
-              NS_LOG_INFO ( "FRAG_DEBUG: SS DoReceive, the Packet is a fragment" << std::endl);
-              packet->RemoveHeader (fragSubhdr);
-              uint32_t fc = fragSubhdr.GetFc ();
-              NS_LOG_INFO ( "\t fragment size = " << packet->GetSize () << std::endl);
-
-              if (fc == 2)
-                {
-                  // This is the latest fragment.
-                  // Take the fragment queue, defragment a packet and send it to the upper layer
-                  NS_LOG_INFO ( "\t Received the latest fragment" << std::endl);
-                  GetWranConnectionManager ()->GetConnection (cid)
-                  ->FragmentEnqueue (packet);
-
-                  WranConnection::FragmentsQueue fragmentsQueue = GetWranConnectionManager ()->
-                    GetConnection (cid)->GetFragmentsQueue ();
-
-                  Ptr<Packet> fullPacket = Create<Packet> ();
-
-                  // DEFRAGMENTATION
-                  NS_LOG_INFO ( "\t SS PACKET DEFRAGMENTATION" << std::endl);
-                  for (std::list<Ptr<const Packet> >::const_iterator iter = fragmentsQueue.begin ();
-                       iter != fragmentsQueue.end (); ++iter)
-                    {
-                      // Create the whole Packet
-                      fullPacket->AddAtEnd (*iter);
-                    }
-                  GetWranConnectionManager ()->GetConnection (cid)
-                  ->ClearFragmentsQueue ();
-                  NS_LOG_INFO ( "\t fullPacket size = " << fullPacket->GetSize () << std::endl);
-
-                  m_ssRxTrace (fullPacket);
-                  ForwardUp (fullPacket, m_baseStationId, GetMacAddress ()); // source shall be BS's address or sender SS's?
-                }
-              else
-                {
-                  // This is the first or middle fragment.
-                  // Take the fragment queue, store the fragment into the queue
-                  NS_LOG_INFO ( "\t Received the first or the middle fragment" << std::endl);
-                  GetWranConnectionManager ()->GetConnection (cid)->FragmentEnqueue (packet);
-                }
-            }
-        }
-      else if (cid.IsMulticast ())
-        {
-          m_traceSSRx (packet, GetMacAddress (), &cid);
-          ForwardUp (packet, m_baseStationId, GetMacAddress ()); // source shall be BS's address or sender SS's?
-        }
-      else if (IsPromisc ())
-        {
-          NotifyPromiscTrace (packet);
-          m_ssPromiscRxTrace (packet);
-
-          // not for me, ignore
-        }
-      else
-        {
-          // not for me drop
-        }
-    }
-  else
-    {
-      // from other SS, ignore
-    }
+	GetPhy ()->SetSimplex (GetChannel(nr_channel+1));
 }
+
+//void
+//WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
+//{
+//  GenericMacHeader gnrcMacHdr;
+//  WranManagementMessageType msgType;
+//  RngRsp rngrsp;
+//  Cid cid;
+//  uint32_t pktSize = packet->GetSize ();
+//  packet->RemoveHeader (gnrcMacHdr);
+//  FragmentationSubheader fragSubhdr;
+//  bool fragmentation = false;  // it becames true when there is a fragmentation subheader
+//
+//  if (gnrcMacHdr.GetHt () == MacHeaderType::HEADER_TYPE_GENERIC)
+//    {
+//      if (gnrcMacHdr.check_hcs () == false)
+//        {
+//          // The header is noisy
+//          NS_LOG_INFO ("Header HCS ERROR");
+//          m_ssRxDropTrace (packet);
+//          return;
+//        }
+//
+//      cid = gnrcMacHdr.GetCid ();
+//
+//      // checking for subheaders
+//      uint8_t type = gnrcMacHdr.GetType ();
+//      if (type)
+//        {
+//          // Check if there is a fragmentation Subheader
+//          uint8_t tmpType = type;
+//          if (((tmpType >> 2) & 1) == 1)
+//            {
+//              // a TRANSPORT packet with fragmentation subheader has been received!
+//              fragmentation = true;
+//              NS_LOG_INFO ("SS DoReceive -> the packet is a fragment" <<  std::endl);
+//            }
+//        }
+//
+//      if (cid == GetBroadcastConnection ()->GetCid () && !fragmentation)
+//        {
+//          packet->RemoveHeader (msgType);
+//          switch (msgType.GetType ())
+//            {
+//            case WranManagementMessageType::MESSAGE_TYPE_DL_MAP:
+//              {
+//                if (GetState () == SS_STATE_SYNCHRONIZING)
+//                  {
+//                    Simulator::Cancel (m_linkManager->GetDlMapSyncTimeoutEvent ());
+//                  }
+//
+//                if (m_lostDlMapEvent.IsRunning ())
+//                  {
+//                    Simulator::Cancel (m_lostDlMapEvent);
+//                  }
+//
+//                m_linkManager->ScheduleScanningRestart (m_lostDlMapInterval, EVENT_LOST_DL_MAP, false, m_lostDlMapEvent);
+//
+//                if (m_dcdWaitTimeoutEvent.IsRunning ())
+//                  {
+//                    Simulator::Cancel (m_dcdWaitTimeoutEvent);
+//                  }
+//
+//                m_linkManager->ScheduleScanningRestart (m_intervalT1,
+//                                                        EVENT_DCD_WAIT_TIMEOUT,
+//                                                        false,
+//                                                        m_dcdWaitTimeoutEvent);
+//
+//                if (m_ucdWaitTimeoutEvent.IsRunning ())
+//                  {
+//                    Simulator::Cancel (m_ucdWaitTimeoutEvent);
+//                  }
+//
+//                m_linkManager->ScheduleScanningRestart (m_intervalT12,
+//                                                        EVENT_UCD_WAIT_TIMEOUT,
+//                                                        true,
+//                                                        m_ucdWaitTimeoutEvent);
+//
+//                DlMap dlmap;
+//                packet->RemoveHeader (dlmap);
+//                ProcessDlMap (dlmap);
+//                break;
+//              }
+//            case WranManagementMessageType::MESSAGE_TYPE_UL_MAP:
+//              {
+//                if (m_lostUlMapEvent.IsRunning ())
+//                  {
+//                    Simulator::Cancel (m_lostUlMapEvent);
+//                    m_linkManager->ScheduleScanningRestart (m_lostUlMapInterval,
+//                                                            EVENT_LOST_UL_MAP,
+//                                                            true,
+//                                                            m_lostUlMapEvent);
+//                  }
+//
+//                UlMap ulmap;
+//                packet->RemoveHeader (ulmap);
+//
+//                ProcessUlMap (ulmap);
+//
+//                if (GetState () == SS_STATE_WAITING_REG_RANG_INTRVL)
+//                  {
+//                    if (m_linkManager->GetRangingIntervalFound ())
+//                      {
+//                        if (m_rangOppWaitTimeoutEvent.IsRunning ())
+//                          {
+//                            Simulator::Cancel (m_rangOppWaitTimeoutEvent);
+//                          }
+//                        m_linkManager->PerformBackoff ();
+//                      }
+//                  }
+//                break;
+//              }
+//            case WranManagementMessageType::MESSAGE_TYPE_DCD:
+//              {
+//                if (GetState () == SS_STATE_SYNCHRONIZING)
+//                  {
+//                    SetState (SS_STATE_ACQUIRING_PARAMETERS);
+//                  }
+//
+//                if (m_dcdWaitTimeoutEvent.IsRunning ())
+//                  {
+//                    Simulator::Cancel (m_dcdWaitTimeoutEvent);
+//                    m_linkManager->ScheduleScanningRestart (m_intervalT1,
+//                                                            EVENT_DCD_WAIT_TIMEOUT,
+//                                                            false,
+//                                                            m_dcdWaitTimeoutEvent);
+//                  }
+//
+//                Dcd dcd;
+//                // number of burst profiles is set to number of DL-MAP IEs after processing DL-MAP, not a very good solution
+//                // dcd.SetNrDlBurstProfiles (m_nrDlMapElements);
+//                dcd.SetNrDlBurstProfiles (7);
+//                packet->RemoveHeader (dcd);
+//
+//                ProcessDcd (dcd);
+//                break;
+//              }
+//            case WranManagementMessageType::MESSAGE_TYPE_UCD:
+//              {
+//                Ucd ucd;
+//                // number of burst profiles is set to number of UL-MAP IEs after processing UL-MAP, not a very good solution
+//                // ucd.SetNrUlBurstProfiles (m_nrUlMapElements);
+//                ucd.SetNrUlBurstProfiles (7);
+//                packet->RemoveHeader (ucd);
+//
+//                ProcessUcd (ucd);
+//
+//                if (m_ucdWaitTimeoutEvent.IsRunning ())
+//                  {
+//                    Simulator::Cancel (m_ucdWaitTimeoutEvent);
+//                    m_linkManager->ScheduleScanningRestart (m_intervalT12,
+//                                                            EVENT_UCD_WAIT_TIMEOUT,
+//                                                            true,
+//                                                            m_ucdWaitTimeoutEvent);
+//                  }
+//
+//                if (GetState () == SS_STATE_ACQUIRING_PARAMETERS)
+//                  {
+//                    /*state indicating that SS has completed scanning, synchronization and parameter acquisition
+//                     successfully and now waiting for UL-MAP to start initial ranging.*/
+//                    SetState (SS_STATE_WAITING_REG_RANG_INTRVL);
+//
+//                    m_linkManager->ScheduleScanningRestart (m_intervalT2,
+//                                                            EVENT_RANG_OPP_WAIT_TIMEOUT,
+//                                                            false,
+//                                                            m_rangOppWaitTimeoutEvent);
+//                    m_linkManager->ScheduleScanningRestart (m_lostUlMapInterval,
+//                                                            EVENT_LOST_UL_MAP,
+//                                                            true,
+//                                                            m_lostUlMapEvent);
+//                  }
+//                break;
+//              }
+//            default:
+//              NS_FATAL_ERROR ("Invalid management message type");
+//            }
+//        }
+//      else if (GetInitialRangingConnection () != 0 && cid == GetInitialRangingConnection ()->GetCid () && !fragmentation)
+//        {
+//          m_traceSSRx (packet, GetMacAddress (), &cid);
+//          packet->RemoveHeader (msgType);
+//          switch (msgType.GetType ())
+//            {
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
+//              // intended for base station, ignore
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
+//              NS_ASSERT_MSG (SS_STATE_WAITING_RNG_RSP,
+//                             "SS: Error while receiving a ranging response message: SS state should be SS_STATE_WAITING_RNG_RSP");
+//              packet->RemoveHeader (rngrsp);
+//              m_linkManager->PerformRanging (cid, rngrsp);
+//              break;
+//            default:
+//              NS_LOG_ERROR ("Invalid management message type");
+//            }
+//        }
+//      else if (m_basicConnection != 0 && cid == m_basicConnection->GetCid () && !fragmentation)
+//        {
+//          m_traceSSRx (packet, GetMacAddress (), &cid);
+//          packet->RemoveHeader (msgType);
+//          switch (msgType.GetType ())
+//            {
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_REQ:
+//              // intended for base station, ignore
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_RNG_RSP:
+//              NS_ASSERT_MSG (SS_STATE_WAITING_RNG_RSP,
+//                             "SS: Error while receiving a ranging response message: SS state should be SS_STATE_WAITING_RNG_RSP");
+//              packet->RemoveHeader (rngrsp);
+//              m_linkManager->PerformRanging (cid, rngrsp);
+//              break;
+//            default:
+//              NS_LOG_ERROR ("Invalid management message type");
+//            }
+//        }
+//      else if (m_primaryConnection != 0 && cid == m_primaryConnection->GetCid () && !fragmentation)
+//        {
+//          m_traceSSRx (packet, GetMacAddress (), &cid);
+//          packet->RemoveHeader (msgType);
+//          switch (msgType.GetType ())
+//            {
+//            case WranManagementMessageType::MESSAGE_TYPE_REG_REQ:
+//              // not yet implemented
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_REG_RSP:
+//              // intended for base station, ignore
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_DSA_REQ:
+//              /*from other station as DSA initiation
+//               by BS is not supported, ignore*/
+//              break;
+//            case WranManagementMessageType::MESSAGE_TYPE_DSA_RSP:
+//              {
+//                Simulator::Cancel (GetWranServiceFlowManager ()->GetDsaRspTimeoutEvent ());
+//                DsaRsp dsaRsp;
+//                packet->RemoveHeader (dsaRsp);
+//                GetWranServiceFlowManager ()->ProcessDsaRsp (dsaRsp);
+//                break;
+//              }
+//            case WranManagementMessageType::MESSAGE_TYPE_DSA_ACK:
+//              /*from other station as DSA initiation
+//               by BS is not supported, ignore*/
+//              break;
+//            default:
+//              NS_LOG_ERROR ("Invalid management message type");
+//            }
+//        }
+//      else if (GetWranConnectionManager ()->GetConnection (cid)) // transport connection
+//        {
+//          WranServiceFlow *serviceFlow = GetWranConnectionManager ()->GetConnection (cid)->GetWranServiceFlow ();
+//          WranServiceFlowRecord *record = serviceFlow->GetRecord ();
+//
+//          record->UpdatePktsRcvd (1);
+//          record->UpdateBytesRcvd (pktSize);
+//
+//          // If fragmentation is true, the packet is a fragment.
+//          if (!fragmentation)
+//            {
+//              m_ssRxTrace (packet);
+//              ForwardUp (packet, m_baseStationId, GetMacAddress ()); // source shall be BS's address or sender SS's?
+//            }
+//          else
+//            {
+//              NS_LOG_INFO ( "FRAG_DEBUG: SS DoReceive, the Packet is a fragment" << std::endl);
+//              packet->RemoveHeader (fragSubhdr);
+//              uint32_t fc = fragSubhdr.GetFc ();
+//              NS_LOG_INFO ( "\t fragment size = " << packet->GetSize () << std::endl);
+//
+//              if (fc == 2)
+//                {
+//                  // This is the latest fragment.
+//                  // Take the fragment queue, defragment a packet and send it to the upper layer
+//                  NS_LOG_INFO ( "\t Received the latest fragment" << std::endl);
+//                  GetWranConnectionManager ()->GetConnection (cid)
+//                  ->FragmentEnqueue (packet);
+//
+//                  WranConnection::FragmentsQueue fragmentsQueue = GetWranConnectionManager ()->
+//                    GetConnection (cid)->GetFragmentsQueue ();
+//
+//                  Ptr<Packet> fullPacket = Create<Packet> ();
+//
+//                  // DEFRAGMENTATION
+//                  NS_LOG_INFO ( "\t SS PACKET DEFRAGMENTATION" << std::endl);
+//                  for (std::list<Ptr<const Packet> >::const_iterator iter = fragmentsQueue.begin ();
+//                       iter != fragmentsQueue.end (); ++iter)
+//                    {
+//                      // Create the whole Packet
+//                      fullPacket->AddAtEnd (*iter);
+//                    }
+//                  GetWranConnectionManager ()->GetConnection (cid)
+//                  ->ClearFragmentsQueue ();
+//                  NS_LOG_INFO ( "\t fullPacket size = " << fullPacket->GetSize () << std::endl);
+//
+//                  m_ssRxTrace (fullPacket);
+//                  ForwardUp (fullPacket, m_baseStationId, GetMacAddress ()); // source shall be BS's address or sender SS's?
+//                }
+//              else
+//                {
+//                  // This is the first or middle fragment.
+//                  // Take the fragment queue, store the fragment into the queue
+//                  NS_LOG_INFO ( "\t Received the first or the middle fragment" << std::endl);
+//                  GetWranConnectionManager ()->GetConnection (cid)->FragmentEnqueue (packet);
+//                }
+//            }
+//        }
+//      else if (cid.IsMulticast ())
+//        {
+//          m_traceSSRx (packet, GetMacAddress (), &cid);
+//          ForwardUp (packet, m_baseStationId, GetMacAddress ()); // source shall be BS's address or sender SS's?
+//        }
+//      else if (IsPromisc ())
+//        {
+//          NotifyPromiscTrace (packet);
+//          m_ssPromiscRxTrace (packet);
+//
+//          // not for me, ignore
+//        }
+//      else
+//        {
+//          // not for me drop
+//        }
+//    }
+//  else
+//    {
+//      // from other SS, ignore
+//    }
+//}
 
 void
 WranSubscriberStationNetDevice::ProcessDlMap (const DlMap &dlmap)

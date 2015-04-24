@@ -180,6 +180,9 @@ public:
 
   void SetReceiveCallback (void);
 
+  uint8_t GetTotalChannels (void);
+  void SetTotalChannels (uint8_t t_channels);
+
   void ForwardUp (Ptr<Packet> packet, const Mac48Address &source, const Mac48Address &dest);
 
   virtual bool Enqueue (Ptr<Packet> packet, const MacHeaderType &hdrType, Ptr<WranConnection> connection) = 0;
@@ -284,6 +287,7 @@ private:
 
   Ptr<Object> m_mobility;
 
+  uint8_t totalChannels;
 };
 
 } // namespace ns3

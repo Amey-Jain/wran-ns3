@@ -146,7 +146,7 @@ SimpleOfdmWranPhy::InitSimpleOfdmWranPhy (void)
   m_currentBurstSize = 0;
   m_noiseFigure = 5; // dB
   m_txPower = 30; // dBm
-  SetBandwidth (10000000); // 10Mhz
+  SetBandwidth (6000000); // 6Mhz
   m_nbErroneousBlock = 0;
   m_nrRecivedFecBlocks = 0;
   m_snrToBlockErrorRateManager = new SNRToBlockErrorRateManager ();
@@ -260,8 +260,11 @@ SimpleOfdmWranPhy::Send (Ptr<PacketBurst> burst,
                           uint8_t direction)
 {
 
+	NS_LOG_INFO("From ofdm phy " << GetState());
   if (GetState () != PHY_STATE_TX)
     {
+	  NS_LOG_INFO("Start transmitting from ofdm phy");
+
       m_currentBurstSize = burst->GetSize ();
       m_nrFecBlocksSent = 0;
       m_currentBurst = burst;
@@ -278,6 +281,7 @@ SimpleOfdmWranPhy::StartSendDummyFecBlock (bool isFirstBlock,
                                             uint8_t direction)
 {
   SetState (PHY_STATE_TX);
+  NS_LOG_INFO("Start Sending Dummy Fec Block");
   bool isLastFecBlock = 0;
   if (isFirstBlock)
     {
@@ -295,6 +299,7 @@ SimpleOfdmWranPhy::StartSendDummyFecBlock (bool isFirstBlock,
     {
       isLastFecBlock = false;
     }
+  NS_LOG_INFO("Before Sending");
   channel->Send (m_blockTime,
                  m_currentBurstSize,
                  this,
@@ -306,6 +311,9 @@ SimpleOfdmWranPhy::StartSendDummyFecBlock (bool isFirstBlock,
                  m_txPower,
                  m_currentBurst);
 
+  NS_LOG_INFO("After Sending");
+
+
   m_nrRemainingBlocksToSend--;
   Simulator::Schedule (m_blockTime, &SimpleOfdmWranPhy::EndSendFecBlock, this, modulationType, direction);
 }
@@ -315,6 +323,7 @@ void
 SimpleOfdmWranPhy::EndSendFecBlock (WranPhy::ModulationType modulationType,
                                      uint8_t direction)
 {
+	NS_LOG_INFO("End Send Fec Block");
   m_nrFecBlocksSent++;
   SetState (PHY_STATE_IDLE);
 
@@ -345,7 +354,8 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
                                   double rxPower,
                                   Ptr<PacketBurst> burst)
 {
-
+	NS_LOG_INFO("Start Receiving from ofdm phy " << GetState());
+	NS_LOG_INFO("Freq " << frequency << " RxFreq " << GetRxFrequency());
   uint8_t drop = 0;
   double Nwb = -114 + m_noiseFigure + 10 * std::log (GetBandwidth () / 1000000000.0) / 2.303;
   double SNR = rxPower - Nwb;
@@ -394,6 +404,7 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
     case PHY_STATE_IDLE:
       if (frequency == GetRxFrequency ())
         {
+    	  NS_LOG_INFO("Got the received freq " << m_blockTime);
           if (isFirstBlock)
             {
               NotifyRxBegin (burst);
@@ -412,7 +423,7 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
                                drop,
                                burst);
 
-          SetState (PHY_STATE_RX);
+//          SetState (PHY_STATE_RX);
         }
       break;
     case PHY_STATE_RX:
@@ -434,6 +445,7 @@ SimpleOfdmWranPhy::EndReceiveFecBlock (uint32_t burstSize,
                                         uint8_t drop,
                                         Ptr<PacketBurst> burst)
 {
+	NS_LOG_INFO("End Received Fec Block ofdm phy");
   SetState (PHY_STATE_IDLE);
   m_nrRecivedFecBlocks++;
 
@@ -464,6 +476,7 @@ SimpleOfdmWranPhy::EndReceiveFecBlock (uint32_t burstSize,
 void
 SimpleOfdmWranPhy::EndReceive (Ptr<const PacketBurst> burst)
 {
+	NS_LOG_INFO("End Received from ofdm phy");
   Ptr<PacketBurst> b = burst->Copy ();
   GetReceiveCallback () (b);
   m_traceRx (burst);
@@ -1101,5 +1114,148 @@ SimpleOfdmWranPhy::AssignStreams (int64_t stream)
   m_URNG->SetStream (stream);
   return 1;
 }
+/* ------------------------- Cognitive Functions --------------------- */
+//bool
+//SimpleOfdmWranPhy::IsStateCcaBusy (void)
+//{
+//  return m_state->IsStateCcaBusy ();
+//}
+//
+//bool
+//SimpleOfdmWranPhy::IsStateIdle (void)
+//{
+//  return m_state->IsStateIdle ();
+//}
+//bool
+//SimpleOfdmWranPhy::IsStateBusy (void)
+//{
+//  return m_state->IsStateBusy ();
+//}
+//bool
+//SimpleOfdmWranPhy::IsStateRx (void)
+//{
+//  return m_state->IsStateRx ();
+//}
+//bool
+//SimpleOfdmWranPhy::IsStateTx (void)
+//{
+//  return m_state->IsStateTx ();
+//}
+//bool
+//SimpleOfdmWranPhy::IsStateSwitching (void)
+//{
+//  return m_state->IsStateSwitching ();
+//}
+//bool
+//SimpleOfdmWranPhy::IsStateSensing (void)
+//{
+//  return m_state->IsStateSensing ();
+//}
+//
+//void
+//SimpleOfdmWranPhy::SetSenseEndedCallback(SnsEndedCallback callback)
+//{
+//  m_senseEndedCallback = callback;
+//}
+//void
+//SimpleOfdmWranPhy::SetHandoffEndedCallback(SnsEndedCallback callback)
+//{
+//  m_handoffEndedCallback = callback;
+//}
+//
+//
+//void
+//SimpleOfdmWranPhy::SetChannelNumber (uint16_t nch)
+//{
+//  if (Simulator::Now () == Seconds (0) || IsStateSwitching())
+//    {
+//      // this is not channel switch, this is initialization
+//      NS_LOG_DEBUG ("start at channel " << nch);
+//      m_channelNumber = nch;
+//      return;
+//    }
+//
+//  NS_ASSERT (!IsStateSwitching () && !IsStateSensing ());
+//  switch (m_state->GetState ())
+//    {
+//    case YansWifiPhy::RX:
+//      NS_LOG_DEBUG ("drop packet because of channel switching while reception");
+//      m_endRxEvent.Cancel ();
+//      goto switchChannel;
+//      break;
+//    case YansWifiPhy::TX:
+//      NS_LOG_DEBUG ("channel switching postponed until end of current transmission");
+//      Simulator::Schedule (GetDelayUntilIdle (), &SimpleOfdmWranPhy::SetChannelNumber, this, nch);
+//      break;
+//    case YansWifiPhy::CCA_BUSY:
+//    case YansWifiPhy::IDLE:
+//      goto switchChannel;
+//      break;
+//    default:
+//      NS_ASSERT (false);
+//      break;
+//    }
+//
+//  return;
+//
+//switchChannel:
+//
+//  NS_LOG_DEBUG ("switching channel " << m_channelNumber << " -> " << nch);
+//  m_state->SwitchToChannelSwitching (m_channelSwitchDelay, nch);
+//  m_interference.EraseEvents ();
+//  /*
+//   * Needed here to be able to correctly sensed the medium for the first
+//   * time after the switching. The actual switching is not performed until
+//   * after m_channelSwitchDelay. Packets received during the switching
+//   * state are added to the event list and are employed later to figure
+//   * out the state of the medium after the switching.
+//   */
+//  m_channelNumber = nch;
+//  if (!m_handoffEndedCallback.IsNull())
+//    Simulator::Schedule (m_channelSwitchDelay, &YansWifiPhy::m_handoffEndedCallback, this);
+//}
+//
+//void
+//SimpleOfdmWranPhy::StartSensing (Time duration)
+//{
+//
+//  NS_ASSERT (!IsStateSwitching () && !IsStateSensing ());
+//  switch (m_state->GetState ())
+//    {
+//    case YansWifiPhy::RX:
+//      NS_LOG_DEBUG ("channel sensing postponed until end of current reception");
+//      Simulator::Schedule (GetDelayUntilIdle (), &YansWifiPhy::StartSensing, this, duration);
+//      break;
+//    case YansWifiPhy::TX:
+//      NS_LOG_DEBUG ("channel sensing postponed until end of current transmission");
+//      Simulator::Schedule (GetDelayUntilIdle (), &YansWifiPhy::StartSensing, this, duration);
+//      break;
+//    case YansWifiPhy::CCA_BUSY:
+//    case YansWifiPhy::IDLE:
+//      goto startSensing;
+//      break;
+//    default:
+//      NS_ASSERT (false);
+//      break;
+//    }
+//
+//  return;
+//
+//startSensing:
+//
+//  NS_LOG_DEBUG ("sensing started for duration " << duration);
+//  m_state->SwitchToChannelSensing (duration);
+//  m_interference.EraseEvents ();
+//  Simulator::Schedule (duration, &YansWifiPhy::m_senseEndedCallback, this);
+//  //TODO 2: must see what happens to packets received during sensing
+//  /*
+//   * Needed here to be able to correctly sensed the medium for the first
+//   * time after the switching. The actual switching is not performed until
+//   * after m_channelSwitchDelay. Packets received during the switching
+//   * state are added to the event list and are employed later to figure
+//   * out the state of the medium after the switching.
+//   */
+//  //m_channelNumber = nch;
+//}
 
 } // namespace ns3

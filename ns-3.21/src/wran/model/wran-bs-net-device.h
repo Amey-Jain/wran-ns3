@@ -211,6 +211,7 @@ public:
 
   void Start (void);
   void Stop (void);
+
   /**
    * \brief Enqueue a packet into a connection queue
    * \param packet the packet to be enqueued
@@ -226,6 +227,10 @@ public:
   Ptr<WranBsWranServiceFlowManager> GetWranServiceFlowManager (void) const;
   void SetWranServiceFlowManager (Ptr<WranBsWranServiceFlowManager> );
 private:
+  void SendCustomMessage (void);
+  void EndSendCustomMessage (void);
+  void ScheduleNextBroadcast(int nr_channel);
+
   void DoDispose (void);
   void StartFrame (void);
   void StartDlSubFrame (void);

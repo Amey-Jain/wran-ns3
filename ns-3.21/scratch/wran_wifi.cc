@@ -1,5 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
+ *  Copyright (c) 2007,2008, 2009 INRIA, UDcast
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -12,146 +14,201 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Mohamed Amine Ismail <amine.ismail@sophia.inria.fr>
+ *                              <amine.ismail@udcast.com>
  */
 
+//
+// Default network topology includes a base station (BS) and 2
+// subscriber station (SS).
+
+//      +-----+
+//      | SS0 |
+//      +-----+
+//     10.1.1.1
+//      -------
+//        ((*))
+//
+//                  10.1.1.7
+//               +------------+
+//               |Base Station| ==((*))
+//               +------------+
+//
+//        ((*))
+//       -------
+//      10.1.1.2
+//       +-----+
+//       | SS1 |
+//       +-----+
+
 #include "ns3/core-module.h"
-#include "ns3/point-to-point-module.h"
 #include "ns3/network-module.h"
 #include "ns3/applications-module.h"
-#include "ns3/wifi-module.h"
 #include "ns3/mobility-module.h"
-#include "ns3/csma-module.h"
+#include "ns3/config-store-module.h"
+#include "ns3/wimax-module.h"
 #include "ns3/internet-module.h"
+#include "ns3/global-route-manager.h"
+#include "ns3/ipcs-classifier-record.h"
+#include "ns3/service-flow.h"
+#include "ns3/netanim-module.h"
+#include <iostream>
 
-// Default Network Topology
-//
-//   Wifi 10.1.1.0
-//                 AP
-//  *    *    *    *
-//  |    |    |    | 
-// n3   n2   n1   n0
+NS_LOG_COMPONENT_DEFINE ("WimaxSimpleExample");
 
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE ("ThirdScriptExample");
-
-int 
-main (int argc, char *argv[])
+int main (int argc, char *argv[])
 {
+  bool verbose = false;
 
-	bool verbose = true;
-  uint32_t nWifi = 3;
+  int duration = 7, schedType = 0;
+  WimaxHelper::SchedulerType scheduler = WimaxHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
-  cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
-  cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
+  cmd.AddValue ("scheduler", "type of scheduler to use with the network devices", schedType);
+  cmd.AddValue ("duration", "duration of the simulation in seconds", duration);
+  cmd.AddValue ("verbose", "turn on all WimaxNetDevice log components", verbose);
+  cmd.Parse (argc, argv);
+  LogComponentEnable ("UdpClient", LOG_LEVEL_INFO);
+  LogComponentEnable ("UdpServer", LOG_LEVEL_INFO);
+  switch (schedType)
+    {
+    case 0:
+      scheduler = WimaxHelper::SCHED_TYPE_SIMPLE;
+      break;
+    case 1:
+      scheduler = WimaxHelper::SCHED_TYPE_MBQOS;
+      break;
+    case 2:
+      scheduler = WimaxHelper::SCHED_TYPE_RTPS;
+      break;
+    default:
+      scheduler = WimaxHelper::SCHED_TYPE_SIMPLE;
+    }
 
-  cmd.Parse (argc,argv);
+  NodeContainer ssNodes;
+  NodeContainer bsNodes;
+
+  ssNodes.Create (2);
+  bsNodes.Create (1);
+
+  WimaxHelper wimax;
+
+  NetDeviceContainer ssDevs, bsDevs;
+
+  ssDevs = wimax.Install (ssNodes,
+                          WimaxHelper::DEVICE_TYPE_SUBSCRIBER_STATION,
+                          WimaxHelper::SIMPLE_PHY_TYPE_OFDM,
+                          scheduler);
+  bsDevs = wimax.Install (bsNodes, WimaxHelper::DEVICE_TYPE_BASE_STATION, WimaxHelper::SIMPLE_PHY_TYPE_OFDM, scheduler);
+
+  wimax.EnableAscii ("bs-devices", bsDevs);
+  wimax.EnableAscii ("ss-devices", ssDevs);
+
+  Ptr<SubscriberStationNetDevice> ss[2];
+
+  for (int i = 0; i < 2; i++)
+    {
+      ss[i] = ssDevs.Get (i)->GetObject<SubscriberStationNetDevice> ();
+      ss[i]->SetModulationType (WimaxPhy::MODULATION_TYPE_QAM16_12);
+    }
+
+  Ptr<BaseStationNetDevice> bs;
+
+  bs = bsDevs.Get (0)->GetObject<BaseStationNetDevice> ();
+
+  InternetStackHelper stack;
+  stack.Install (bsNodes);
+  stack.Install (ssNodes);
+
+  Ipv4AddressHelper address;
+  address.SetBase ("10.1.1.0", "255.255.255.0");
+
+  Ipv4InterfaceContainer SSinterfaces = address.Assign (ssDevs);
+  Ipv4InterfaceContainer BSinterface = address.Assign (bsDevs);
 
   if (verbose)
     {
-      LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
-      LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
+      wimax.EnableLogComponents ();  // Turn on all wimax logging
     }
-// Create Nodes
-	NodeContainer wifiStaNodes;
-	wifiStaNodes.Create (nWifi);
-	
-  NodeContainer wifiApNode;
-  wifiApNode.Create(1);
+  /*------------------------------*/
+  UdpServerHelper udpServer;
+  ApplicationContainer serverApps;
+  UdpClientHelper udpClient;
+  ApplicationContainer clientApps;
 
-// Create Channel
-	YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
-  YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
-  phy.SetChannel (channel.Create ());
+  udpServer = UdpServerHelper (100);
 
-  WifiHelper wifi = WifiHelper::Default ();
-  wifi.SetRemoteStationManager ("ns3::AarfWifiManager");
+  serverApps = udpServer.Install (ssNodes.Get (0));
+  serverApps.Start (Seconds (6));
+  serverApps.Stop (Seconds (duration));
 
-  NqosWifiMacHelper mac = NqosWifiMacHelper::Default ();
+  udpClient = UdpClientHelper (SSinterfaces.GetAddress (0), 100);
+  udpClient.SetAttribute ("MaxPackets", UintegerValue (1200));
+  udpClient.SetAttribute ("Interval", TimeValue (Seconds (0.5)));
+  udpClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
-  Ssid ssid = Ssid ("ns-3-ssid");
-  mac.SetType ("ns3::StaWifiMac",
-               "Ssid", SsidValue (ssid),
-               "ActiveProbing", BooleanValue (false));
+  clientApps = udpClient.Install (ssNodes.Get (1));
+  clientApps.Start (Seconds (6));
+  clientApps.Stop (Seconds (duration));
 
-// Create NetDevice
-  NetDeviceContainer staDevices;
-  staDevices = wifi.Install (phy, mac, wifiStaNodes);
+  Simulator::Stop (Seconds (duration + 0.1));
 
-  mac.SetType ("ns3::ApWifiMac",
-               "Ssid", SsidValue (ssid));
-               
-  NetDeviceContainer apDevices;
-  apDevices = wifi.Install (phy, mac, wifiApNode);
-  
-  
-// Create Mobility
+  wimax.EnablePcap ("wimax-simple-ss0", ssNodes.Get (0)->GetId (), ss[0]->GetIfIndex ());
+  wimax.EnablePcap ("wimax-simple-ss1", ssNodes.Get (1)->GetId (), ss[1]->GetIfIndex ());
+  wimax.EnablePcap ("wimax-simple-bs0", bsNodes.Get (0)->GetId (), bs->GetIfIndex ());
+
+  IpcsClassifierRecord DlClassifierUgs (Ipv4Address ("0.0.0.0"),
+                                        Ipv4Mask ("0.0.0.0"),
+                                        SSinterfaces.GetAddress (0),
+                                        Ipv4Mask ("255.255.255.255"),
+                                        0,
+                                        65000,
+                                        100,
+                                        100,
+                                        17,
+                                        1);
+  ServiceFlow DlServiceFlowUgs = wimax.CreateServiceFlow (ServiceFlow::SF_DIRECTION_DOWN,
+                                                          ServiceFlow::SF_TYPE_RTPS,
+                                                          DlClassifierUgs);
+
+  IpcsClassifierRecord UlClassifierUgs (SSinterfaces.GetAddress (1),
+                                        Ipv4Mask ("255.255.255.255"),
+                                        Ipv4Address ("0.0.0.0"),
+                                        Ipv4Mask ("0.0.0.0"),
+                                        0,
+                                        65000,
+                                        100,
+                                        100,
+                                        17,
+                                        1);
+  ServiceFlow UlServiceFlowUgs = wimax.CreateServiceFlow (ServiceFlow::SF_DIRECTION_UP,
+                                                          ServiceFlow::SF_TYPE_RTPS,
+                                                          UlClassifierUgs);
+  ss[0]->AddServiceFlow (DlServiceFlowUgs);
+  ss[1]->AddServiceFlow (UlServiceFlowUgs);
   MobilityHelper mobility;
 
-  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
-                                 "MinX", DoubleValue (0.0),
-                                 "MinY", DoubleValue (0.0),
-                                 "DeltaX", DoubleValue (5.0),
-                                 "DeltaY", DoubleValue (10.0),
-                                 "GridWidth", UintegerValue (3),
-                                 "LayoutType", StringValue ("RowFirst"));
+  mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
+                                       "X", StringValue ("ns3::UniformRandomVariable[Min=0|Max=1000]"),
+                                       "Y", StringValue ("ns3::UniformRandomVariable[Min=0|Max=100]"));
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+      mobility.Install (ssNodes);
+      mobility.Install (bsNodes);
 
-  mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
-                             "Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
-  mobility.Install (wifiStaNodes);
+  AnimationInterface anim ("wran-test.xml");
 
-//  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobility.Install (wifiApNode);
-
-// Install InternetStack
-  InternetStackHelper stack;
-  stack.Install (wifiApNode);
-  stack.Install (wifiStaNodes);
-  
-// Set IpAddress
-  Ipv4AddressHelper address;
-
-  address.SetBase ("10.1.1.0", "255.255.255.0");
-  
-  Ipv4InterfaceContainer apInterface;
-  
-  apInterface = address.Assign (apDevices);
-  address.Assign (staDevices);
-  
-  
-// Server Application
-  UdpEchoServerHelper echoServer (9);
-
-  ApplicationContainer serverApps = echoServer.Install (wifiApNode.Get (0));
-  serverApps.Start (Seconds (1.0));
-  serverApps.Stop (Seconds (20.0));  
- 
-// Client Application
-  UdpEchoClientHelper echoClient (apInterface.GetAddress (0), 9);
-  echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
-  echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-  echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
-
-  ApplicationContainer clientApps = echoClient.Install (wifiStaNodes.Get (1));
-  clientApps.Start (Seconds (2.0));
-  clientApps.Stop (Seconds (10.0));
-  
-  ApplicationContainer clientApps1 = echoClient.Install (wifiStaNodes.Get (2));
-  clientApps1.Start (Seconds (11.0));
-  clientApps1.Stop (Seconds (15.0));
-
-// Populate routing table
-  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
-
-// tell simuator when to stop
-  Simulator::Stop (Seconds (20.0));
-
-// Enable pcap tracer
-  phy.EnablePcapAll ("third");
-  
+  NS_LOG_INFO ("Starting simulation.....");
   Simulator::Run ();
+
+  ss[0] = 0;
+  ss[1] = 0;
+  bs = 0;
+
   Simulator::Destroy ();
+  NS_LOG_INFO ("Done.");
 
   return 0;
 }

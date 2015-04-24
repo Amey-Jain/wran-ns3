@@ -186,6 +186,40 @@ public:
   */
   int64_t AssignStreams (int64_t stream);
 
+//  virtual void SetSenseEndedCallback(WranPhy::SnsEndedCallback callback);
+//  virtual void SetHandoffEndedCallback(WranPhy::HandoffEndedCallback callback);
+//  /**
+//     * \brief Set channel number.
+//     *
+//     * Channel center frequency = Channel starting frequency + 5 MHz * (nch - 1)
+//     *
+//     * where Starting channel frequency is standard-dependent, see SetStandard()
+//     * as defined in IEEE 802.11-2007 17.3.8.3.2.
+//     *
+//     * YansWifiPhy can switch among different channels. Basically, YansWifiPhy
+//     * has a private attribute m_channelNumber that identifies the channel the
+//     * PHY operates on. Channel switching cannot interrupt an ongoing transmission.
+//     * When PHY is in TX state, the channel switching is postponed until the end
+//     * of the current transmission. When the PHY is in RX state, the channel
+//     * switching causes the drop of the synchronized packet.
+//     */
+//    void SetChannelNumber (uint16_t id);
+//
+//    /**
+//     * \brief Start sensing on current channel
+//     *
+//     * \param duration Time to sense
+//     *
+//     */
+//    void StartSensing (Time duration);
+//
+//    virtual bool IsStateCcaBusy (void);
+//      virtual bool IsStateIdle (void);
+//      virtual bool IsStateBusy (void);
+//      virtual bool IsStateRx (void);
+//      virtual bool IsStateTx (void);
+//      virtual bool IsStateSwitching (void);
+//      virtual bool IsStateSensing (void);
 private:
   Time DoGetTransmissionTime (uint32_t size, WranPhy::ModulationType modulationType) const;
   uint64_t DoGetNrSymbols (uint32_t size, WranPhy::ModulationType modulationType) const;
@@ -319,6 +353,11 @@ private:
 
   /// Provides uniform random variables.
   Ptr<UniformRandomVariable> m_URNG;
+
+//  //sensing ended callback
+//  SnsEndedCallback m_senseEndedCallback;
+//  //handoff ended callback
+//  HandoffEndedCallback m_handoffEndedCallback;
 
 };
 

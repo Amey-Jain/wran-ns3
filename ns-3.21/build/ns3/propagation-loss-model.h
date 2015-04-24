@@ -255,6 +255,9 @@ public:
    */
   double GetSystemLoss (void) const;
 
+  double DbmToW (double dbm) const;
+  double DbmFromW (double w) const;
+
 private:
   FriisPropagationLossModel (const FriisPropagationLossModel &o);
   FriisPropagationLossModel & operator = (const FriisPropagationLossModel &o);
@@ -262,8 +265,6 @@ private:
                                 Ptr<MobilityModel> a,
                                 Ptr<MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
-  double DbmToW (double dbm) const;
-  double DbmFromW (double w) const;
 
   static const double PI;
   double m_lambda;

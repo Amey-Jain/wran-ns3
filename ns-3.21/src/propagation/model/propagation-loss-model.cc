@@ -254,7 +254,10 @@ FriisPropagationLossModel::DoCalcRxPower (double txPowerDbm,
    * L: system loss (unit-less)
    * lambda: wavelength (m)
    */
+
+	NS_LOG_INFO("Calculating Rx Power from FRIIS Model freq " << GetFrequency());
   double distance = a->GetDistanceFrom (b);
+
   if (distance < 3*m_lambda)
     {
       NS_LOG_WARN ("distance not within the far field region => inaccurate propagation loss value");

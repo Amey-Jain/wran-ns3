@@ -49,7 +49,8 @@ public:
     RANDOM_PROPAGATION,
     FRIIS_PROPAGATION,
     LOG_DISTANCE_PROPAGATION,
-    COST231_PROPAGATION
+    COST231_PROPAGATION,
+    ITU_NLOS_ROOFTOP_PROPAGATION
   };
   /**
    * \brief Creates a channel and sets the propagation model

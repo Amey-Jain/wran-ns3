@@ -7,8 +7,16 @@
     
 
 // Module headers:
+#include "cognitive-packet-tags.h"
+#include "common-cognitive-header.h"
+#include "pu-model.h"
+#include "repository.h"
 #include "simple-ofdm-wran-channel.h"
 #include "simple-ofdm-wran-phy.h"
+#include "spectrum-data.h"
+#include "spectrum-decision.h"
+#include "spectrum-manager.h"
+#include "spectrum-sensing.h"
 #include "wran-bs-net-device.h"
 #include "wran-bs-scheduler-rtps.h"
 #include "wran-bs-scheduler-simple.h"

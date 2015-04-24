@@ -50,20 +50,32 @@
 #include "ns3/wran-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/global-route-manager.h"
-#include "ns3/wran-ipcs-classifier-record.h"
-#include "ns3/wran-service-flow.h"
+#include "ns3/ipcs-classifier-record.h"
+#include "ns3/service-flow.h"
+#include "ns3/netanim-module.h"
+#include "ns3/udp-echo-helper.h"
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 NS_LOG_COMPONENT_DEFINE ("WranSimpleExample");
 
 using namespace ns3;
 
+
+Ptr<PacketBurst> CreatePacketBurst(){
+	Ptr<PacketBurst> burst = Create<PacketBurst> ();
+	std::string sentMessage("Hi from bs");
+	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
+	burst->AddPacket (packet);
+	return burst;
+}
+
 int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 10, schedType = 0, mxSS = 3, mxBS = 1;
+  int duration = 10, schedType = 0, mxSS = 50, mxBS = 7;
   WranHelper::SchedulerType scheduler = WranHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -71,11 +83,20 @@ int main (int argc, char *argv[])
   cmd.AddValue ("duration", "duration of the simulation in seconds", duration);
   cmd.AddValue ("verbose", "turn on all WranNetDevice log components", verbose);
   cmd.Parse (argc, argv);
-  LogComponentEnable ("UdpClient", LOG_LEVEL_INFO);
-  LogComponentEnable ("UdpServer", LOG_LEVEL_INFO);
+
+  LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
+  LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
   LogComponentEnable("WranSimpleExample", LOG_LEVEL_INFO);
-//  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
-//  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
+  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
+  LogComponentEnable("SimpleOfdmWranPhy", LOG_LEVEL_INFO);
+  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
+  LogComponentEnable("WranBaseStationNetDevice", LOG_LEVEL_INFO);
+  LogComponentEnable("WranNetDevice", LOG_LEVEL_INFO);
+  LogComponentEnable("WranSubscriberStationNetDevice", LOG_LEVEL_INFO);
+  LogComponentEnable("PropagationLossModel", LOG_LEVEL_INFO);
+
+
+
   switch (schedType)
     {
     case 0:
@@ -99,17 +120,26 @@ int main (int argc, char *argv[])
 
   WranHelper wran;
 
+  // Read PU file
+    Ptr<PUModel> puModel = CreateObject<PUModel>();
+    std::string map_file = "map_PUs_multiple.txt";
+    puModel->SetPuMapFile((char*)map_file.c_str());
+    //Create repository
+    Ptr<Repository> repo = CreateObject<Repository>();
+
   NetDeviceContainer ssDevs, bsDevs;
 
-  ssDevs = wran.Install (ssNodes,
+  ssDevs = wran.Install (repo, puModel, ssNodes,
                           WranHelper::DEVICE_TYPE_SUBSCRIBER_STATION,
                           WranHelper::SIMPLE_PHY_TYPE_OFDM,
                           scheduler);
-  bsDevs = wran.Install (bsNodes,
+  bsDevs = wran.Install (repo, puModel, bsNodes,
 		  	  	  	  	  WranHelper::DEVICE_TYPE_BASE_STATION,
 		  	  	  	  	  WranHelper::SIMPLE_PHY_TYPE_OFDM,
 		  	  	  	  	  scheduler);
-
+//  wran.SetPropagationLossModel(SimpleOfdmWranChannel::COST231_PROPAGATION);
+  wran.SetPropagationLossModel(SimpleOfdmWranChannel::FRIIS_PROPAGATION);
+// wran.SetPropagationLossModel(SimpleOfdmWranChannel::ITU_NLOS_ROOFTOP_PROPAGATION);
 //  wran.EnableAscii ("bs-devices", bsDevs);
 //  wran.EnableAscii ("ss-devices", ssDevs);
 
@@ -121,7 +151,7 @@ int main (int argc, char *argv[])
       ss[i]->SetModulationType (WranPhy::MODULATION_TYPE_QAM16_12); // its ok for wran
     }
 
-  Ptr<WranBaseStationNetDevice> bs[2];
+  Ptr<WranBaseStationNetDevice> bs[mxBS];
 
   for(int i=0;i<mxBS;i++){
 	  bs[i] = bsDevs.Get (i)->GetObject<WranBaseStationNetDevice> ();
@@ -141,60 +171,132 @@ int main (int argc, char *argv[])
   vector<int> pos;
   pos.push_back(3);
   MobilityModel mob;
-mob.SetPosition(pos);
+  mob.SetPosition(pos);
 */
 
 //  bsMobility.SetPositionAllocator ("ns3::GridPositionAllocator",
 //                                   "MinX", DoubleValue (0.0),
-//                                   "MinY", DoubleValue (0.0),
-//                                   "DeltaX", DoubleValue (500.0),
-//                                   "DeltaY", DoubleValue (10.0),
-//                                   "GridWidth", UintegerValue (3),
+//                                   "MinY", DoubleValue (50.0),
+//                                   "DeltaX", DoubleValue (1000.0),
+//                                   "DeltaY", DoubleValue (1000.0),
+//                                   "GridWidth", UintegerValue (2),
 //                                   "LayoutType", StringValue ("RowFirst"));
-//
-//  bsMobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-//      bsMobility.Install (bsNodes);
-  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
-                                   "X", StringValue ("0.0"), // center-x
-                                   "Y", StringValue ("0.0"), // center-y
-                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=60]"), //position angle in gradient
-                                   "Theta",StringValue ("ns3::UniformRandomVariable[Min=0|Max=100]")); // position radius
 
+  // all units are in km. multiply 1000 to convert it to meter.
+  double km = 1000.0;
+  double rowNeighbourBSOverlappingRegion = 5.0 * km;
+  double bsTransmissionRange = 30.0 * km;
+  double bsToBsDistanceX = 2.0 * (bsTransmissionRange - rowNeighbourBSOverlappingRegion);
+  double bsToBsDistanceY = bsToBsDistanceX * sin(45.0);
+  double startCoordinate = 40.0 * km;
+
+  Ptr<ListPositionAllocator> positionAllocBS = CreateObject<ListPositionAllocator> ();
+        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate, 							10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate, 							10.0));
+        positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
+        positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
+        bsMobility.SetPositionAllocator (positionAllocBS);
+
+      bsMobility.Install (bsNodes);
+//  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
+//                                   "X", StringValue ("0.0"), // center-x
+//                                   "Y", StringValue ("0.0"), // center-y
+//                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=6]")); // position radius
+
+      std::string unRanVar("ns3::UniformRandomVariable[Min=0|Max=");
+      std::stringstream sstreamX, sstreamY;
+      double maxAreaX = 2.0 * (startCoordinate + bsToBsDistanceX);
+      double maxAreaY = 2.0 * (startCoordinate + bsToBsDistanceY);
+      sstreamX << unRanVar << maxAreaX << "]";
+      sstreamY << unRanVar << maxAreaY << "]";
+      mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
+                                           "X", StringValue (sstreamX.str()),
+                                           "Y", StringValue (sstreamY.str()));
 //  mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
-//                                     "X", StringValue ("ns3::UniformRandomVariable[Min=5|Max=495]"),
+//                                     "X", StringValue ("ns3::UniformRandomVariable[Min=0|Max=5500]"),
 //                                     "Y", StringValue ("ns3::UniformRandomVariable[Min=0|Max=100]"));
+//  Ptr<ListPositionAllocator> positionAllocSS = CreateObject<ListPositionAllocator> ();
+//  positionAllocSS->Add (Vector (startCoordinate + bsToBsDistanceX, startCoordinate, 10.0));
+//  mobility.SetPositionAllocator (positionAllocSS);
 
+//      mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
+//                                         "MinX", DoubleValue (250.0),
+//                                         "MinY", DoubleValue (0.0),
+//                                         "DeltaX", DoubleValue (-500.0),
+//                                         "DeltaY", DoubleValue (10.0),
+//                                         "GridWidth", UintegerValue (3),
+//                                         "LayoutType", StringValue ("RowFirst"));
+
+//      Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
+//      positionAlloc->Add (Vector (200.0, 0.0, 2.0));
+//      positionAlloc->Add (Vector (210.0, 0.0, 2.0));
+//        mobility.SetPositionAllocator (positionAlloc);
 
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
     mobility.Install (ssNodes);
 
+//    wran.GetSpectrumManager()->SetRepository(repo);
+//    wran.GetSpectrumManager()->Start();
   if (verbose)
     {
       wran.EnableLogComponents ();  // Turn on all wran logging
     }
   /*------------------------------*/
-  UdpServerHelper udpServer;
-  ApplicationContainer serverApps;
-  UdpClientHelper udpClient;
-  ApplicationContainer clientApps[mxSS - 1];
+//  UdpServerHelper udpServer;
+//  ApplicationContainer serverApps;
+//  UdpClientHelper udpClient;
+//  ApplicationContainer clientApps[mxSS - 1];
+//
+//  udpServer = UdpServerHelper (100);
+//
+//  serverApps = udpServer.Install (ssNodes.Get (0));
+//  serverApps.Start (Seconds (1));
+//  serverApps.Stop (Seconds (duration));
+//
+//  udpClient = UdpClientHelper (SSinterfaces.GetAddress (0), 100);
+//  udpClient.SetAttribute ("MaxPackets", UintegerValue (500));
+//  udpClient.SetAttribute ("Interval", TimeValue (Seconds (1)));
+//  udpClient.SetAttribute ("PacketSize", UintegerValue (1024));
+//
+//  for(int i=0;i<mxSS-1;i++){
+//	  clientApps[i] = udpClient.Install (ssNodes.Get (i+1));
+//	    clientApps[i].Start (Seconds (3));
+//	    clientApps[i].Stop (Seconds (5));
+//  }
 
-  udpServer = UdpServerHelper (100);
+//  UdpEchoServerHelper udpServer = UdpEchoServerHelper(1000);
+//    ApplicationContainer serverApps;
+//    UdpEchoClientHelper udpClient = UdpEchoClientHelper(BSinterface.GetAddress (0),1000);
+//    ApplicationContainer clientApps;
 
-  serverApps = udpServer.Install (ssNodes.Get (0));
-  serverApps.Start (Seconds (1));
-  serverApps.Stop (Seconds (duration));
+//    udpServer = UdpEchoServerHelper (100);
 
-  udpClient = UdpClientHelper (SSinterfaces.GetAddress (0), 100);
-  udpClient.SetAttribute ("MaxPackets", UintegerValue (500));
-  udpClient.SetAttribute ("Interval", TimeValue (Seconds (1)));
-  udpClient.SetAttribute ("PacketSize", UintegerValue (1024));
+//    serverApps = udpServer.Install (bsNodes.Get (0));
+//    serverApps.Start (Seconds (1));
+//    serverApps.Stop (Seconds (duration));
+//
+//    std::string sss("Hello bunny");
+////    udpClient = UdpEchoClientHelper (BSinterface.GetAddress (0), 100);
+//    udpClient.SetAttribute ("MaxPackets", UintegerValue (500));
+//    udpClient.SetAttribute ("Interval", TimeValue (Seconds (10)));
+//    udpClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
-  for(int i=0;i<mxSS-1;i++){
-	  clientApps[i] = udpClient.Install (ssNodes.Get (i+1));
-	    clientApps[i].Start (Seconds (3));
-	    clientApps[i].Stop (Seconds (5));
-  }
+
+////    for(int i=0;i<mxSS;i++){
+//  	  clientApps = udpClient.Install (ssNodes.Get (0));
+////    }
+//  	udpClient.SetFill(clientApps.Get(0),sss);
+//  	    clientApps.Start (Seconds (1));
+//  	    clientApps.Stop (Seconds (10));
+////    }
+
+
+
+
 
   Simulator::Stop (Seconds (duration + 0.1));
 /*
@@ -234,21 +336,61 @@ mob.SetPosition(pos);
 	    ss[i]->AddWranServiceFlow (UlWranServiceFlowUgs);
   }
 
+
+  AnimationInterface anim ("wireless-animation.xml"); // Mandatory
+  uint32_t ssResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/ss.png");
+    uint32_t bsResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/bs.png");
+    for (uint32_t i = 0; i < ssNodes.GetN (); ++i)
+      {
+    	anim.UpdateNodeImage(ssNodes.Get(i)->GetId(), ssResource);
+        anim.UpdateNodeDescription (ssNodes.Get (i), "CPE"); // Optional
+//        anim.UpdateNodeColor (ssNodes.Get (i), 255, 0, 0); // Optional
+      }
+    for (uint32_t i = 0; i < bsNodes.GetN (); ++i)
+      {
+    	anim.UpdateNodeImage(bsNodes.Get(i)->GetId(), bsResource);
+        anim.UpdateNodeDescription (bsNodes.Get (i), "BS"); // Optional
+//        anim.UpdateNodeColor (bsNodes.Get (i), 0, 255, 0); // Optional
+      }
+
+    anim.EnablePacketMetadata (); // Optional
+//    anim.EnableIpv4L3ProtocolCounters (Seconds (0), Seconds (10)); // Optional
+//    anim.EnableIpv4RouteTracking ("routingtable-wireless.xml", Seconds (0), Seconds (5), Seconds (0.25)); //Optional
+//    anim.EnableWifiMacCounters (Seconds (0), Seconds (10)); //Optional
+//    anim.EnableWifiPhyCounters (Seconds (0), Seconds (10)); //Optional
+
   NS_LOG_INFO ("Starting simulation.....");
   Simulator::Run ();
+//  Simulator::Schedule (Seconds(1), &BSTOSSMessage, this, bs[0], ss[0]);
+  	for(int i=0;i<mxBS;i++){
+  	  bs[i]->GetPhy()->SetSimplex(bs[i]->GetChannel(0));
+  		bs[i]->GetPhy()->SetState(WranPhy::PHY_STATE_IDLE);
+  	}
+  	for(int i=0;i<mxSS;i++){
+  		ss[i]->GetPhy()->SetSimplex(ss[i]->GetChannel(0));
+  		ss[i]->GetPhy()->SetState(WranPhy::PHY_STATE_IDLE);
+  	}
 
-  for(int i=0;i<mxSS;i++){
-	  NS_LOG_INFO( "Channel Bandwidth: " << i << ": " << ss[i]->GetPhy()->GetChannelBandwidth());
-	  NS_LOG_INFO( "Channel TxFrequency: " << i << ": " << ss[i]->GetPhy()->GetTxFrequency());
-	  NS_LOG_INFO( "Channel RxFrequency: " << i << ": " << ss[i]->GetPhy()->GetRxFrequency());
-  }
-  for(int i=0;i<mxBS;i++){
-	  NS_LOG_INFO( "Channel Bandwidth: " << bs[i]->GetPhy()->GetChannelBandwidth());
-	  NS_LOG_INFO( "Channel TxFrequency: " << bs[i]->GetPhy()->GetTxFrequency());
-	  NS_LOG_INFO( "Channel RxFrequency: " << bs[i]->GetPhy()->GetRxFrequency());
 
-	  NS_LOG_INFO( "Transmit Power: " << bs[i]->GetPhy()->GetTxPower());
-  }
+
+
+
+
+//  for(int i=0;i<mxSS;i++){
+//	  NS_LOG_INFO( "Channel Bandwidth: " << i << ": " << ss[i]->GetPhy()->GetChannelBandwidth());
+//	  NS_LOG_INFO( "Channel TxFrequency: " << i << ": " << ss[i]->GetPhy()->GetTxFrequency());
+//	  NS_LOG_INFO( "Channel RxFrequency: " << i << ": " << ss[i]->GetPhy()->GetRxFrequency());
+//	  NS_LOG_INFO( "Channel Frequency: " << i << ": " << ss[i]->GetPhy()->GetFrequency());
+//  }
+//  for(int i=0;i<mxBS;i++){
+//	  NS_LOG_INFO( "Channel Bandwidth: " << bs[i]->GetPhy()->GetChannelBandwidth());
+//	  NS_LOG_INFO( "Channel TxFrequency: " << bs[i]->GetPhy()->GetTxFrequency());
+//	  NS_LOG_INFO( "Channel RxFrequency: " << bs[i]->GetPhy()->GetRxFrequency());
+//	  NS_LOG_INFO( "Channel Frequency: " << bs[i]->GetPhy()->GetFrequency());
+//
+//	  NS_LOG_INFO( "Transmit Power: " << bs[i]->GetPhy()->GetTxPower());
+//	  NS_LOG_INFO( "Number of SSs: " << bs[i]->GetWranSSManager()->GetNSSs());
+//  }
 
   for(int i=0;i<mxSS;i++){
 	  ss[i] = 0;
@@ -262,3 +404,6 @@ mob.SetPosition(pos);
 
   return 0;
 }
+
+
+
