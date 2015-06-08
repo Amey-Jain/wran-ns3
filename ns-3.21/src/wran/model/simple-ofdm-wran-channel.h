@@ -76,6 +76,18 @@ public:
              bool isLastBlock,
              uint64_t frequency, WranPhy::ModulationType modulationType,
              uint8_t direction, double txPowerDbm, Ptr<PacketBurst> burst);
+
+  void Send (Time BlockTime,
+			uint32_t burstSize,
+			Ptr<WranPhy> phy,
+			bool isFirstBlock,
+			bool isLastBlock,
+			uint64_t frequency,
+			WranPhy::ModulationType modulationType,
+			uint8_t direction,
+			uint16_t nrOfSubChannel,
+			std::vector<double> *txPowerListDbm,
+			Ptr<PacketBurst> burst);
   /**
    * \brief sets the propagation model
    * \param propModel the propagation model to used

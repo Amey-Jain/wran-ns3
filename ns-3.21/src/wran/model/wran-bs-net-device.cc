@@ -43,9 +43,11 @@
 #include "wran-connection-manager.h"
 #include "wran-bs-link-manager.h"
 #include "wran-bandwidth-manager.h"
-#include "common-cognitive-header.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/llc-snap-header.h"
+
+#include <vector>
+#include <unistd.h>
 
 NS_LOG_COMPONENT_DEFINE ("WranBaseStationNetDevice");
 
@@ -218,7 +220,7 @@ WranBaseStationNetDevice::InitWranBaseStationNetDevice ()
   m_ssManager = CreateObject<WranSSManager> ();
   m_bsClassifier = CreateObject<WranIpcsClassifier> ();
   m_serviceFlowManager = CreateObject<WranBsWranServiceFlowManager> (this);
-
+  spectrumManager = NULL;
 }
 
 WranBaseStationNetDevice::WranBaseStationNetDevice (Ptr<Node> node, Ptr<WranPhy> phy)
@@ -508,13 +510,27 @@ WranBaseStationNetDevice::Start (void)
   m_symbolDuration = GetPhy ()->GetSymbolDuration ();
   GetWranBandwidthManager ()->SetSubframeRatio ();
 
+  NS_LOG_INFO("Starting BS");
   SetTotalChannels(MAX_CHANNELS);
   CreateDefaultConnections ();
 //  GetPhy ()->SetSimplex (m_linkManager->SelectDlChannel ());
 //  will hande send and receive manually
 //  Simulator::ScheduleNow (&WranBaseStationNetDevice::StartFrame, this);
-  GetPhy ()->SetSimplex (GetChannel(0));
-//  Simulator::ScheduleNow (&WranBaseStationNetDevice::SendCustomMessage, this);
+//  GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
+  SwitchToChannel(COMMON_CONTROL_CHANNEL_NUMBER);
+
+  std::stringstream ss;
+  // initialize power
+  SetSimpleOfdmWranPhy(DynamicCast<SimpleOfdmWranPhy> (GetPhy()));
+  uint16_t numberOfSubChannel = GetSimpleOfdmWranPhy()->GetNumberOfSubChannel();
+  double subChannelPower = P_MAX - (10 * log10(numberOfSubChannel));
+  ss << "Total Number of SubChannel: " << numberOfSubChannel << " Each SubChannel Power: " << subChannelPower << " dbm.";
+  NS_LOG_INFO(ss.str());
+  for(int i=0; i<numberOfSubChannel; i++){
+	  GetSimpleOfdmWranPhy()->SetTxPowerSubChannel(i, subChannelPower);
+//	  assignedTxPower[i] = P_MAX - 22;
+  }
+  Simulator::ScheduleNow (&WranBaseStationNetDevice::AttachSpectrumManager, this);
 
   /* shall actually be 2 symbols = 1 (preamble) + 1 (bandwidth request header)*/
   m_bwReqOppSize = 6;
@@ -522,25 +538,92 @@ WranBaseStationNetDevice::Start (void)
 }
 
 void
-WranBaseStationNetDevice::SendCustomMessage (void)
+WranBaseStationNetDevice::AttachSpectrumManager (void)
 {
-	Simulator::ScheduleNow (&WranBaseStationNetDevice::ScheduleNextBroadcast, this, 0);
+//	if (spectrumManager == NULL) {
+//		NS_LOG_INFO("Attaching Spectrum Manager");
+//
+//		Ptr<PUModel> puModel = CreateObject<PUModel>();
+//		std::string map_file = "map_PUs_multiple.txt";
+//		puModel->SetPuMapFile((char*)map_file.c_str());
+//		//Create repository
+//		Ptr<Repository> repo = CreateObject<Repository>();
+//
+//		spectrumManager = CreateObject<SpectrumManager>(GetPhy()->GetDevice()->GetNode()->GetId());
+//		spectrumManager->SetPuModel(0.1, puModel);
+//
+//	}
+	Simulator::ScheduleNow (&WranBaseStationNetDevice::SendCustomMessage, this, 0);
 }
 
-void WranBaseStationNetDevice::ScheduleNextBroadcast(int nr_channel){
+void
+WranBaseStationNetDevice::StartIterativeAlgorithm(int iteration){
+	if(iteration >= MAX_ITERATION){
+		NS_LOG_INFO("Algorithm Ended for expiring iteration count");
+	}
+	NS_LOG_INFO("Iteration count: " << iteration);
+	Time backoffTimer;
+	backoffTimer = Seconds(1);
+}
+
+void
+WranBaseStationNetDevice::GetPUSensingStatus (void) {
+	Time compTime;
+	compTime = Seconds(10);
+	if(Simulator::Now() == compTime){
+		NS_LOG_INFO("Ending GetPUSensingStatus");
+		return;
+	}
+	NS_LOG_INFO("Get PU Sensing status");
+
+	Time txDuration;
+	txDuration = Seconds(0.0001);
+
+	std::stringstream ss;
+	ss << Simulator::Now() << "-> PU Sensing info :";
+	for(int i=0;i<MAX_CHANNELS;i++){
+		ss << " " << spectrumManager->IsPuInterfering(txDuration, i);
+	}
+	NS_LOG_INFO(ss.str());
+
+	txDuration = Seconds(2);
+	Simulator::Schedule (txDuration, &WranBaseStationNetDevice::GetPUSensingStatus, this);
+}
+
+void
+WranBaseStationNetDevice::SendCustomMessage (int nr_channel)
+{
 	if(nr_channel >= GetTotalChannels()) {
 
 		Simulator::ScheduleNow (&WranBaseStationNetDevice::EndSendCustomMessage, this);
 		return;
 	}
-	GetPhy ()->SetSimplex (GetChannel(nr_channel)); // lock frequency
-	NS_LOG_INFO("=============== Initiate broadcast in channel from BS: " << GetPhy()->GetTxFrequency() << "=====================");
+//	else {
+//		NS_LOG_INFO("Get PU Sensing status");
+//
+//		Time txDuration;
+//		txDuration = Seconds(0.0001);
+//		bool isPUActiveInChannel = spectrumManager->IsPuInterfering(txDuration, nr_channel);
+//
+//		if(isPUActiveInChannel) {
+//			NS_LOG_INFO("Got PU Activity from BS in channel ");
+//			Simulator::ScheduleNow (&WranBaseStationNetDevice::SendCustomMessage, this, nr_channel+1);
+//			return;
+//		}
+//	}
+//	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER)); // lock frequency
+	SwitchToChannel(COMMON_CONTROL_CHANNEL_NUMBER);
+	NS_LOG_INFO("=============== Send broadcast signal in channel from BS: " << GetMacAddress() << "=====================");
 
 	Ptr<PacketBurst> burst = Create<PacketBurst> ();
 
 	std::stringstream sstream;
 	std::string sentMessage;
-	sstream << "Hi from bs" << PACKET_SEPARATOR << nr_channel << PACKET_SEPARATOR ;
+	sstream << BS_FLAG << PACKET_SEPARATOR
+			<< GetMacAddress() << PACKET_SEPARATOR
+			<< PACKET_TYPE_START_SENSING << PACKET_SEPARATOR
+			<< nr_channel << PACKET_SEPARATOR
+			<< "Hi from bs" << PACKET_SEPARATOR ;
 	sentMessage = sstream.str();
 	NS_LOG_INFO("sent message from bs: " << sentMessage);
 	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
@@ -549,23 +632,131 @@ void WranBaseStationNetDevice::ScheduleNextBroadcast(int nr_channel){
 	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
 
 
-	uint8_t numberOfChannel = 10;
-	double freqChangeIntervalInSeconds = 1.0 / numberOfChannel;
 	Time freqChangeInterval;
-	freqChangeInterval = Seconds(freqChangeIntervalInSeconds);
+	freqChangeInterval = Seconds(REQUEST_TO_BEACON_INTERVAL);// 10 ms
 
-	Simulator::Schedule (freqChangeInterval,
-	                                   &WranBaseStationNetDevice::ScheduleNextBroadcast,
-	                                   this,
-	                                   nr_channel + 1);
+	Simulator::Schedule (freqChangeInterval, &WranBaseStationNetDevice::ScheduleNextBroadcast, this, nr_channel);
+}
+
+void WranBaseStationNetDevice::ScheduleNextBroadcast(int nr_channel){
+
+//	GetPhy ()->SetSimplex (GetChannel(nr_channel)); // lock frequency
+	SwitchToChannel(nr_channel);
+	NS_LOG_INFO("=============== Initiate broadcast in channel from BS: " << GetMacAddress() << "=====================");
+
+	Ptr<PacketBurst> burst = Create<PacketBurst> ();
+
+	std::stringstream sstream;
+	std::string sentMessage;
+	sstream << BS_FLAG << PACKET_SEPARATOR
+			<< GetMacAddress() << PACKET_SEPARATOR
+			<< "Hi from bs" << PACKET_SEPARATOR ;
+	sentMessage = sstream.str();
+	NS_LOG_INFO("sent message from bs: " << sentMessage);
+	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
+	burst->AddPacket (packet);
+
+	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
+
+	Time freqChangeInterval;
+	freqChangeInterval = Seconds(BEACON_TO_REQUEST_INTERVAL);
+
+	Simulator::Schedule (freqChangeInterval, &WranBaseStationNetDevice::SendCustomMessage, this, nr_channel+1);
 }
 
 void
 WranBaseStationNetDevice::EndSendCustomMessage (void)
 {
 	NS_LOG_INFO("End Send Custom Message");
+//	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER)); // lock frequency
+	SwitchToChannel(COMMON_CONTROL_CHANNEL_NUMBER);
+
+	Simulator::ScheduleNow (&WranBaseStationNetDevice::GetSensingResultFromSS, this);
 }
 
+void
+WranBaseStationNetDevice::GetSensingResultFromSS (void)
+{
+	for(int ci=0;ci<MAX_CHANNELS;ci++){
+		// initialize
+		interferencePlusNoise[ci].clear();
+		capturedSignal[ci].clear();
+		SINR[ci].clear();
+	}
+
+	// populate pending sense result list
+	pendingSenseResultList.clear();
+	std::vector<WranSSRecord*> *m_ssRecords = GetWranSSManager()->GetWranSSRecords();
+	for (std::vector<WranSSRecord*>::iterator iter = m_ssRecords->begin (); iter != m_ssRecords->end (); ++iter)
+	{
+		std::stringstream sstream;
+		sstream << (*iter)->GetMacAddress();
+		pendingSenseResultList.insert(sstream.str());
+	}
+
+
+	NS_LOG_INFO("=============== Send GetSensingResultFromSS from BS: " << GetMacAddress() << "=====================");
+
+	Simulator::ScheduleNow (&WranBaseStationNetDevice::SendSensingResultRequest, this, pendingSenseResultList.begin());
+}
+
+void
+WranBaseStationNetDevice::SendSensingResultRequest (std::set<std::string>::iterator sit)
+{
+	if(sit == pendingSenseResultList.end()) {
+		Time getSensingResultRetryInterval;
+		getSensingResultRetryInterval = Seconds(GET_SENSING_RESULT_RETRY_INTERVAL);
+		Simulator::Schedule (getSensingResultRetryInterval ,&WranBaseStationNetDevice::EndGetSensingResultFromSS, this);
+		return;
+	}
+//	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER)); // lock frequency
+	SwitchToChannel(COMMON_CONTROL_CHANNEL_NUMBER);
+
+	Ptr<PacketBurst> burst = Create<PacketBurst> ();
+
+	std::stringstream sstream;
+	std::string sentMessage;
+	sstream << BS_FLAG << PACKET_SEPARATOR
+			<< GetMacAddress() << PACKET_SEPARATOR
+			<< PACKET_TYPE_SEND_SENSING_RESULT << PACKET_SEPARATOR
+			<< (*sit) << PACKET_SEPARATOR
+			<< "Hi from bs" << PACKET_SEPARATOR ;
+	sentMessage = sstream.str();
+	NS_LOG_INFO("sent message from bs: " << sentMessage);
+	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
+	burst->AddPacket (packet);
+
+	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
+
+	Time sendSensingResultRequestInterval;
+	sendSensingResultRequestInterval = Seconds(REQUEST_TO_SENSE_RESULT_INTERVAL);
+	Simulator::Schedule (sendSensingResultRequestInterval ,&WranBaseStationNetDevice::SendSensingResultRequest, this, ++sit);
+}
+
+void
+WranBaseStationNetDevice::EndGetSensingResultFromSS (void)
+{
+	if(pendingSenseResultList.empty()) {
+		NS_LOG_INFO("End Getting Sensing Result");
+//		GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER)); // lock frequency
+		SwitchToChannel(COMMON_CONTROL_CHANNEL_NUMBER);
+		CalculateUtility();
+	} else {
+		NS_LOG_INFO("Retry GetSensingResultFromSS " << pendingSenseResultList.size());
+		Simulator::ScheduleNow (&WranBaseStationNetDevice::SendSensingResultRequest, this, pendingSenseResultList.begin());
+	}
+
+}
+
+void
+WranBaseStationNetDevice::SwitchToChannel(int nr_channel){
+	if(nr_channel == COMMON_CONTROL_CHANNEL_NUMBER){
+		GetPhy()->SetTxPower(30.0);
+	} else {
+		GetPhy()->SetTxPower(assignedTxPower[nr_channel]);
+	}
+	GetPhy ()->SetSimplex (GetChannel(nr_channel));
+}
 
 void
 WranBaseStationNetDevice::Stop (void)
@@ -712,15 +903,218 @@ WranBaseStationNetDevice::Enqueue (Ptr<Packet> packet, const MacHeaderType &hdrT
 void
 WranBaseStationNetDevice::DoReceive (Ptr<Packet> packet)
 {
-	NS_LOG_INFO("Received Packet at BS");
+	std::stringstream logstream;
+	logstream << GetMacAddress();
+	NS_LOG_INFO("==============Received Packet at BS " << logstream.str() << "==============");
 
 	uint32_t sz =  packet->GetSize();
 	uint8_t bf[sz+1];
 	packet->CopyData(bf,sz);
+	bf[sz] = 0;
 
 	std::string ms((char *)bf);
-	NS_LOG_INFO("Received packet message: " << ms);
+	std::istringstream ss(ms);
+	std::string token;
+
+	int i = 0;
+	int bsOrSS = 0;
+	std::string senderMacAddress;
+	std::string messageBody;
+	while(std::getline(ss, token, PACKET_SEPARATOR)) {
+		switch (i) {
+			case 0:
+				bsOrSS = std::atoi(token.c_str());
+				if(bsOrSS == BS_FLAG)return;
+				break;
+			case 1:
+				senderMacAddress = token;
+				break;
+			case 2:
+				messageBody = token;
+				break;
+			default:
+				break;
+		}
+		i++;
+	}
+
+	NS_LOG_INFO("Received packet message at BS: " << ms);
+	if(GetWranSSManager()->GetWranSSRecord( Mac48Address(senderMacAddress.c_str()) ) != 0) {
+		// This packet is from my SS
+		if(GetPhy()->GetRxFrequency() == GetChannel(COMMON_CONTROL_CHANNEL_NUMBER)){
+			// Its a control Message from SS
+			HandleControlMessage(messageBody, senderMacAddress);
+			return;
+		}
+	}
 }
+
+void
+WranBaseStationNetDevice::HandleControlMessage (std::string msgBody, std::string senderMacAddress) {
+	std::istringstream ss(msgBody);
+	std::string token;
+
+	int i = 0;
+	int msgType = -1;
+	int nr_channel = 0;
+	std::string bsMAC;
+	double rxValue;
+	while(std::getline(ss, token, MESSAGE_BODY_SEPARATOR)) {
+		switch (i) {
+			case 0:
+				msgType = std::atoi(token.c_str());
+				if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
+					// I am sure that this message type is send sense result
+					pendingSenseResultList.erase(senderMacAddress.c_str());
+				}
+				break;
+
+			case 1:
+				if(msgType == MESSAGE_TYPE_SEND_PING) {
+					nr_channel = std::atoi(token.c_str());
+				}
+				else if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
+					// sender mac
+					NS_LOG_INFO("Parsed Message in BS MAC:" << token);
+					bsMAC = token;
+				}
+				break;
+
+			case 2:
+				if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
+					// channel number
+					NS_LOG_INFO("Parsed Message in BS NRCH:" << token);
+					nr_channel = std::atoi(token.c_str());
+				}
+				break;
+
+			case 3:
+				if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
+					// sensed power
+					NS_LOG_INFO("Parsed Message in BS PWER:" << token);
+					rxValue = std::atof(token.c_str());
+
+					if(GetMacAddress() == Mac48Address(bsMAC.c_str())) { // this is my signal
+						capturedSignal[nr_channel][senderMacAddress] = rxValue;
+					} else { // this is not my signal
+						std::map<std::string, double>::iterator mit = interferencePlusNoise[nr_channel].find(senderMacAddress);
+						double curValue = GAUSSIAN_NOISE;
+						if(mit != interferencePlusNoise[nr_channel].end()) {// no previous value
+							curValue = interferencePlusNoise[nr_channel][senderMacAddress];
+						}
+						interferencePlusNoise[nr_channel][senderMacAddress] = curValue + std::pow(10.0,(rxValue/10.0));
+					}
+				}
+				break;
+
+			default:
+				break;
+		}
+		i++;
+		if(i == 4)i = 1;
+	}
+
+	if(msgType == MESSAGE_TYPE_SEND_PING) {
+
+		Simulator::ScheduleNow (&WranBaseStationNetDevice::ScheduleNextBroadcast, this, nr_channel);
+	} else if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
+
+		for(int i=0;i<MAX_CHANNELS;i++){
+			std::map<std::string, double>::iterator mit;
+			for(mit = capturedSignal[i].begin(); mit != capturedSignal[i].end(); mit++){
+
+				std::map<std::string, double>::iterator fit = interferencePlusNoise[i].find(mit->first);
+				if(fit == interferencePlusNoise[i].end()) {// no previous value
+					interferencePlusNoise[i][mit->first] = GAUSSIAN_NOISE;
+				}
+				SINR[i][mit->first] = mit->second - (10.0 * std::log10(interferencePlusNoise[i][mit->first]));
+			}
+		}
+
+		PrintAllValue();
+		CalculateUtility();
+	}
+}
+
+void WranBaseStationNetDevice::PrintAllValue(void) {
+	NS_LOG_INFO("...............START...................(" <<  GetMacAddress() << ")");
+	for(int i=0;i<MAX_CHANNELS;i++){
+		std::stringstream ss;
+		std::map<std::string, double>::iterator mit;
+		for(mit = capturedSignal[i].begin(); mit != capturedSignal[i].end(); mit++){
+			ss << " " << mit->second << "(" << mit->first << ")";
+		}
+		NS_LOG_INFO(ss.str());
+	}
+	NS_LOG_INFO(".........................................");
+	for(int i=0;i<MAX_CHANNELS;i++){
+		std::stringstream ss;
+		std::map<std::string, double>::iterator mit;
+		for(mit = interferencePlusNoise[i].begin(); mit != interferencePlusNoise[i].end(); mit++){
+			ss << " " << mit->second << "(" << mit->first << ")";
+		}
+		NS_LOG_INFO(ss.str());
+	}
+	NS_LOG_INFO(".........................................");
+	for(int i=0;i<MAX_CHANNELS;i++){
+		std::stringstream ss;
+		std::map<std::string, double>::iterator mit;
+		for(mit = SINR[i].begin(); mit != SINR[i].end(); mit++){
+			ss << " " << mit->second << "(" << mit->first << ")";
+		}
+		NS_LOG_INFO(ss.str());
+	}
+	NS_LOG_INFO("..............END......................");
+}
+void
+WranBaseStationNetDevice::CalculateUtility(void){
+
+	for(int i=0;i<MAX_CHANNELS;i++){
+		std::stringstream ss;
+		std::map<std::string, double>::iterator sit, cit, iit;
+		sit = SINR[i].begin();
+		cit = capturedSignal[i].begin();
+		iit = interferencePlusNoise[i].begin();
+		for(; sit != SINR[i].end() && cit != capturedSignal[i].end() && iit != interferencePlusNoise[i].end(); ++sit, ++cit, ++iit){
+			double th = CalculateThroughput(sit->second);
+			double mTh = CalculateMAXThroughput(cit->second, iit->second, i);
+
+			double del = mTh + P_MAX;
+			double util = del * ((th / mTh) - (assignedTxPower[i]/P_MAX));
+			NS_LOG_INFO("Calculated Utility: " << i << " (" << sit->first << ") " << util << " " << mTh << " " << th << " " << sit->second);
+		}
+	}
+}
+
+double
+WranBaseStationNetDevice::CalculateThroughput(double sinr){
+	if(sinr < -1)return 0;
+	double th = ((double)GetPhy()->GetChannelBandwidth()) * log(1 + sinr);
+	return th;
+}
+
+double
+WranBaseStationNetDevice::CalculateMAXThroughput(double rxPower, double ipn, int nr_channel){
+	double maxRxPower = rxPower - assignedTxPower[nr_channel] + P_MAX;
+	double sinr = maxRxPower - (10.0 * std::log10(ipn));
+	double th = ((double)GetPhy()->GetChannelBandwidth()) * log(1 + sinr);
+	return th;
+}
+
+double dbmToW(double dbm){
+	return pow(10.0,dbm) / 10.0;
+}
+
+//double
+//WranBaseStationNetDevice::CalculateMAXThroughput(double rxPower, double ipn, int nr_channel){
+//	double mTh = CalculateMAXThroughput(rxPower, ipn, nr_channel);
+//	mTh /= ((double)GetPhy()->GetChannelBandwidth());
+//	double gain = rxPower - assignedTxPower[nr_channel];
+//
+//
+//
+//	(P_MAX / mTh / ln(2)) - ;
+//}
 //void
 //WranBaseStationNetDevice::DoReceive (Ptr<Packet> packet)
 //{
@@ -1282,6 +1676,19 @@ WranBaseStationNetDevice::RangingOppStart (void)
   m_rangingOppNumber++;
 
 //  NS_LOG_DEBUG ("Ranging TO " << (uint32_t) m_rangingOppNumber << ": " << Simulator::Now ().GetSeconds ());
+}
+
+void
+WranBaseStationNetDevice::SetSimpleOfdmWranPhy(Ptr<SimpleOfdmWranPhy> phy)
+{
+	m_simpleOfdmWranPhy = phy;
+
+	NS_LOG_INFO("OFDM Wran Phy Initialized");
+}
+Ptr<SimpleOfdmWranPhy>
+WranBaseStationNetDevice::GetSimpleOfdmWranPhy(void) const
+{
+	return m_simpleOfdmWranPhy;
 }
 
 } // namespace ns3

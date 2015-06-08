@@ -600,7 +600,7 @@ WranNetDevice::InitializeChannels (void)
 
 //	New Things for 802.22
 //	I have chosen operating frequncy 470Mz - 608MHz, at 6MHz bandwidth, total 23 channels.
-  NS_LOG_INFO("hello from net device initializer");
+//  NS_LOG_INFO("hello from net device initializer");
 	uint64_t frequency = 470;
 
   for (uint8_t i = 0; i < 24; i++)

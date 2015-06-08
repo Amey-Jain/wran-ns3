@@ -62,20 +62,11 @@ NS_LOG_COMPONENT_DEFINE ("WranSimpleExample");
 
 using namespace ns3;
 
-
-Ptr<PacketBurst> CreatePacketBurst(){
-	Ptr<PacketBurst> burst = Create<PacketBurst> ();
-	std::string sentMessage("Hi from bs");
-	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
-	burst->AddPacket (packet);
-	return burst;
-}
-
 int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 10, schedType = 0, mxSS = 50, mxBS = 7;
+  int duration = 120, schedType = 0, mxSS = 1, mxBS = 1;
   WranHelper::SchedulerType scheduler = WranHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -84,16 +75,20 @@ int main (int argc, char *argv[])
   cmd.AddValue ("verbose", "turn on all WranNetDevice log components", verbose);
   cmd.Parse (argc, argv);
 
-  LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
-  LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
+//  LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
+//  LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
   LogComponentEnable("WranSimpleExample", LOG_LEVEL_INFO);
-  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
-  LogComponentEnable("SimpleOfdmWranPhy", LOG_LEVEL_INFO);
-  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
+//  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
+//  LogComponentEnable("SimpleOfdmWranPhy", LOG_LEVEL_INFO);
+//  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
   LogComponentEnable("WranBaseStationNetDevice", LOG_LEVEL_INFO);
-  LogComponentEnable("WranNetDevice", LOG_LEVEL_INFO);
+//  LogComponentEnable("WranNetDevice", LOG_LEVEL_INFO);
   LogComponentEnable("WranSubscriberStationNetDevice", LOG_LEVEL_INFO);
-  LogComponentEnable("PropagationLossModel", LOG_LEVEL_INFO);
+//  LogComponentEnable("PropagationLossModel", LOG_LEVEL_INFO);
+  LogComponentEnable("CogSpectrumSensing", LOG_LEVEL_INFO);
+  LogComponentEnable("CogSpectrumManager", LOG_LEVEL_INFO);
+//  LogComponentEnable("CogPUModel", LOG_LEVEL_INFO);
+
 
 
 
@@ -184,11 +179,11 @@ int main (int argc, char *argv[])
 
   // all units are in km. multiply 1000 to convert it to meter.
   double km = 1000.0;
-  double rowNeighbourBSOverlappingRegion = 5.0 * km;
+  double rowNeighbourBSOverlappingRegion = 10.0 * km;
   double bsTransmissionRange = 30.0 * km;
   double bsToBsDistanceX = 2.0 * (bsTransmissionRange - rowNeighbourBSOverlappingRegion);
   double bsToBsDistanceY = bsToBsDistanceX * sin(45.0);
-  double startCoordinate = 40.0 * km;
+  double startCoordinate = 15.0 * km;
 
   Ptr<ListPositionAllocator> positionAllocBS = CreateObject<ListPositionAllocator> ();
         positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate, 							10.0));
@@ -196,22 +191,25 @@ int main (int argc, char *argv[])
         positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
         positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
         positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
-        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
-        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
+//        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
+//        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
         bsMobility.SetPositionAllocator (positionAllocBS);
 
       bsMobility.Install (bsNodes);
-//  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
-//                                   "X", StringValue ("0.0"), // center-x
-//                                   "Y", StringValue ("0.0"), // center-y
-//                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=6]")); // position radius
 
-      std::string unRanVar("ns3::UniformRandomVariable[Min=0|Max=");
       std::stringstream sstreamX, sstreamY;
-      double maxAreaX = 2.0 * (startCoordinate + bsToBsDistanceX);
-      double maxAreaY = 2.0 * (startCoordinate + bsToBsDistanceY);
-      sstreamX << unRanVar << maxAreaX << "]";
-      sstreamY << unRanVar << maxAreaY << "]";
+//      sstreamX << (startCoordinate + (bsToBsDistanceX / 2.0));
+//      sstreamY << (startCoordinate + (2.0 / 3.0 * bsToBsDistanceY));
+//  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
+//                                   "X", StringValue (sstreamX.str()), // center-x
+//                                   "Y", StringValue (sstreamY.str()), // center-y
+//                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=40000]")); // position radius
+
+      std::string unRanVar("ns3::UniformRandomVariable[Min=");
+      double maxAreaX = startCoordinate + (2.0 * bsToBsDistanceX);
+      double maxAreaY = (/*2.0 */ startCoordinate) + bsToBsDistanceY;
+      sstreamX  << unRanVar << startCoordinate << "|Max=" << maxAreaX << "]";
+      sstreamY  << unRanVar << startCoordinate << "|Max=" << maxAreaY << "]";
       mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
                                            "X", StringValue (sstreamX.str()),
                                            "Y", StringValue (sstreamY.str()));
@@ -304,42 +302,42 @@ int main (int argc, char *argv[])
   wran.EnablePcap ("wran-simple-ss1", ssNodes.Get (1)->GetId (), ss[1]->GetIfIndex ());
   wran.EnablePcap ("wran-simple-bs0", bsNodes.Get (0)->GetId (), bs->GetIfIndex ());
 */
-  WranIpcsClassifierRecord DlClassifierUgs (Ipv4Address ("0.0.0.0"),
-                                        Ipv4Mask ("0.0.0.0"),
-                                        SSinterfaces.GetAddress (0),
-                                        Ipv4Mask ("255.255.255.255"),
-                                        0,
-                                        65000,
-                                        100,
-                                        100,
-                                        17,
-                                        1);
-  WranServiceFlow DlWranServiceFlowUgs = wran.CreateWranServiceFlow (WranServiceFlow::SF_DIRECTION_DOWN,
-                                                          WranServiceFlow::SF_TYPE_RTPS,
-                                                          DlClassifierUgs);
-  ss[0]->AddWranServiceFlow (DlWranServiceFlowUgs);
-
-  for(int i=1;i<mxSS;i++){
-	  WranIpcsClassifierRecord UlClassifierUgs (SSinterfaces.GetAddress (i),
-	                                          Ipv4Mask ("255.255.255.255"),
-	                                          Ipv4Address ("0.0.0.0"),
-	                                          Ipv4Mask ("0.0.0.0"),
-	                                          0,
-	                                          65000,
-	                                          100,
-	                                          100,
-	                                          17,
-	                                          1);
-	    WranServiceFlow UlWranServiceFlowUgs = wran.CreateWranServiceFlow (WranServiceFlow::SF_DIRECTION_UP,
-	                                                            WranServiceFlow::SF_TYPE_RTPS,
-	                                                            UlClassifierUgs);
-	    ss[i]->AddWranServiceFlow (UlWranServiceFlowUgs);
-  }
+//  WranIpcsClassifierRecord DlClassifierUgs (Ipv4Address ("0.0.0.0"),
+//                                        Ipv4Mask ("0.0.0.0"),
+//                                        SSinterfaces.GetAddress (0),
+//                                        Ipv4Mask ("255.255.255.255"),
+//                                        0,
+//                                        65000,
+//                                        100,
+//                                        100,
+//                                        17,
+//                                        1);
+//  WranServiceFlow DlWranServiceFlowUgs = wran.CreateWranServiceFlow (WranServiceFlow::SF_DIRECTION_DOWN,
+//                                                          WranServiceFlow::SF_TYPE_RTPS,
+//                                                          DlClassifierUgs);
+//  ss[0]->AddWranServiceFlow (DlWranServiceFlowUgs);
+//
+//  for(int i=1;i<mxSS;i++){
+//	  WranIpcsClassifierRecord UlClassifierUgs (SSinterfaces.GetAddress (i),
+//	                                          Ipv4Mask ("255.255.255.255"),
+//	                                          Ipv4Address ("0.0.0.0"),
+//	                                          Ipv4Mask ("0.0.0.0"),
+//	                                          0,
+//	                                          65000,
+//	                                          100,
+//	                                          100,
+//	                                          17,
+//	                                          1);
+//	    WranServiceFlow UlWranServiceFlowUgs = wran.CreateWranServiceFlow (WranServiceFlow::SF_DIRECTION_UP,
+//	                                                            WranServiceFlow::SF_TYPE_RTPS,
+//	                                                            UlClassifierUgs);
+//	    ss[i]->AddWranServiceFlow (UlWranServiceFlowUgs);
+//  }
 
 
   AnimationInterface anim ("wireless-animation.xml"); // Mandatory
   uint32_t ssResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/ss.png");
-    uint32_t bsResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/bs.png");
+  uint32_t bsResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/bs.png");
     for (uint32_t i = 0; i < ssNodes.GetN (); ++i)
       {
     	anim.UpdateNodeImage(ssNodes.Get(i)->GetId(), ssResource);
@@ -359,17 +357,50 @@ int main (int argc, char *argv[])
 //    anim.EnableWifiMacCounters (Seconds (0), Seconds (10)); //Optional
 //    anim.EnableWifiPhyCounters (Seconds (0), Seconds (10)); //Optional
 
+    Ptr<MobilityModel> baseStationMobility = 0;
+    Ptr<MobilityModel> subscriberStationMobility = 0;
+    double distance = 0.0, mnDistance = maxAreaY;
+    int chBS = -1, i, j;
+	for(j = 0; j < mxSS; ++j){
+		subscriberStationMobility = ss[j]->GetNode()->GetObject<MobilityModel> ();
+		std::stringstream cpeNameStream;
+		cpeNameStream << "CPE";
+
+		distance = 0.0, mnDistance = maxAreaY;
+		for(i = 0; i < mxBS; ++i){
+		    baseStationMobility = bs[i]->GetNode()->GetObject<MobilityModel> ();
+    		distance = baseStationMobility->GetDistanceFrom (subscriberStationMobility);
+
+    		if(distance < mnDistance) {
+    			chBS = i;
+    			mnDistance = distance;
+    		}
+
+//    		if(distance <= MAX_TRANSMISSION_RANGE) {
+//    			break;
+//    		}
+    	}
+		if(i>=mxBS){
+			i = chBS;
+		}
+		cpeNameStream << i;
+		ss[j]->SetMyBSMAC(bs[i]->GetMacAddress());
+		bs[i]->GetWranSSManager()->CreateWranSSRecord(ss[j]->GetMacAddress());
+		anim.UpdateNodeDescription (ss[j]->GetNode(), cpeNameStream.str());
+    }
+
+
   NS_LOG_INFO ("Starting simulation.....");
   Simulator::Run ();
 //  Simulator::Schedule (Seconds(1), &BSTOSSMessage, this, bs[0], ss[0]);
-  	for(int i=0;i<mxBS;i++){
-  	  bs[i]->GetPhy()->SetSimplex(bs[i]->GetChannel(0));
-  		bs[i]->GetPhy()->SetState(WranPhy::PHY_STATE_IDLE);
-  	}
-  	for(int i=0;i<mxSS;i++){
-  		ss[i]->GetPhy()->SetSimplex(ss[i]->GetChannel(0));
-  		ss[i]->GetPhy()->SetState(WranPhy::PHY_STATE_IDLE);
-  	}
+//  	for(i=0;i<mxBS;i++){
+//  	  bs[i]->GetPhy()->SetSimplex(bs[i]->GetChannel(0));
+//  		bs[i]->GetPhy()->SetState(WranPhy::PHY_STATE_IDLE);
+//  	}
+//  	for(i=0;i<mxSS;i++){
+//  		ss[i]->GetPhy()->SetSimplex(ss[i]->GetChannel(0));
+//  		ss[i]->GetPhy()->SetState(WranPhy::PHY_STATE_IDLE);
+//  	}
 
 
 
@@ -382,22 +413,24 @@ int main (int argc, char *argv[])
 //	  NS_LOG_INFO( "Channel RxFrequency: " << i << ": " << ss[i]->GetPhy()->GetRxFrequency());
 //	  NS_LOG_INFO( "Channel Frequency: " << i << ": " << ss[i]->GetPhy()->GetFrequency());
 //  }
-//  for(int i=0;i<mxBS;i++){
+
+  	for(i=0;i<mxBS;i++){
 //	  NS_LOG_INFO( "Channel Bandwidth: " << bs[i]->GetPhy()->GetChannelBandwidth());
 //	  NS_LOG_INFO( "Channel TxFrequency: " << bs[i]->GetPhy()->GetTxFrequency());
 //	  NS_LOG_INFO( "Channel RxFrequency: " << bs[i]->GetPhy()->GetRxFrequency());
 //	  NS_LOG_INFO( "Channel Frequency: " << bs[i]->GetPhy()->GetFrequency());
 //
 //	  NS_LOG_INFO( "Transmit Power: " << bs[i]->GetPhy()->GetTxPower());
-//	  NS_LOG_INFO( "Number of SSs: " << bs[i]->GetWranSSManager()->GetNSSs());
-//  }
+	  NS_LOG_INFO( "Number of SSs: " << bs[i]->GetWranSSManager()->GetNSSs());
+//	  NS_LOG_INFO( "Number of Registered SSs: " << bs[i]->GetWranSSManager()->GetNRegisteredSSs());
+	}
 
-  for(int i=0;i<mxSS;i++){
+	for(int i=0;i<mxSS;i++){
 	  ss[i] = 0;
-  }
-  for(int i=0;i<mxBS;i++){
+	}
+	for(int i=0;i<mxBS;i++){
 	  bs[i] = 0;
-  }
+	}
 
   Simulator::Destroy ();
   NS_LOG_INFO ("Done.");

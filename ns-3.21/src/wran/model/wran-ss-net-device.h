@@ -30,7 +30,8 @@
 #include "ns3/uinteger.h"
 #include "wran-ss-service-flow-manager.h"
 #include "ns3/wran-ipcs-classifier.h"
-
+#include "common-cognitive-header.h"
+#include <map>
 namespace ns3 {
 
 class Node;
@@ -288,9 +289,17 @@ public:
    */
   void SetWranServiceFlowManager (Ptr<WranSSServiceFlowManager> );
 
+  void SetMyBSMAC(Mac48Address BSMAC);
+
+  Mac48Address GetMyBSMAC();
+
 private:
   static Time GetDefaultLostDlMapInterval ();
 
+  void SendDownlinkChannelRequest (int nr_channel);
+  void ScanningChannel(int nr_channel);
+  void EndScanningChannel (void);
+  void SendSensingResult (void);
   void DoDispose (void);
   bool DoSend (Ptr<Packet> packet, const Mac48Address &source, const Mac48Address &dest, uint16_t protocolNumber);
   void DoReceive (Ptr<Packet> packet);
@@ -394,6 +403,9 @@ private:
    * \see class CallBackTraceSource
    */
   TracedCallback<Ptr<const Packet> > m_ssRxDropTrace;
+  void InsertIntoBSRxList(std::string macAddress, std::vector<double> v);
+  Mac48Address myBSMAC;
+  std::map<std::string, std::vector<double> > bsRxList;
 };
 
 } // namespace ns3

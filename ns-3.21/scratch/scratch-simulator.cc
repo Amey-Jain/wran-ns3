@@ -75,7 +75,7 @@ int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 10, schedType = 0, mxSS = 50, mxBS = 7, mxPUTx = 5, mxPURx = 15;
+  int duration = 10, schedType = 0, mxSS = 30, mxBS = 3, mxPUTx = 5, mxPURx = 15;
   WimaxHelper::SchedulerType scheduler = WimaxHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -398,21 +398,22 @@ int main (int argc, char *argv[])
 
 
 
-//  for(int i=0;i<mxSS;i++){
-//	  NS_LOG_INFO( "Channel Bandwidth: " << i << ": " << ss[i]->GetPhy()->GetChannelBandwidth());
-//	  NS_LOG_INFO( "Channel TxFrequency: " << i << ": " << ss[i]->GetPhy()->GetTxFrequency());
-//	  NS_LOG_INFO( "Channel RxFrequency: " << i << ": " << ss[i]->GetPhy()->GetRxFrequency());
-//	  NS_LOG_INFO( "Channel Frequency: " << i << ": " << ss[i]->GetPhy()->GetFrequency());
-//  }
-//  for(int i=0;i<mxBS;i++){
-//	  NS_LOG_INFO( "Channel Bandwidth: " << bs[i]->GetPhy()->GetChannelBandwidth());
-//	  NS_LOG_INFO( "Channel TxFrequency: " << bs[i]->GetPhy()->GetTxFrequency());
-//	  NS_LOG_INFO( "Channel RxFrequency: " << bs[i]->GetPhy()->GetRxFrequency());
-//	  NS_LOG_INFO( "Channel Frequency: " << bs[i]->GetPhy()->GetFrequency());
-//
-//	  NS_LOG_INFO( "Transmit Power: " << bs[i]->GetPhy()->GetTxPower());
-//	  NS_LOG_INFO( "Number of SSs: " << bs[i]->GetWimaxSSManager()->GetNSSs());
-//  }
+  for(int i=0;i<mxSS;i++){
+	  NS_LOG_INFO( "Channel Bandwidth: " << i << ": " << ss[i]->GetPhy()->GetChannelBandwidth());
+	  NS_LOG_INFO( "Channel TxFrequency: " << i << ": " << ss[i]->GetPhy()->GetTxFrequency());
+	  NS_LOG_INFO( "Channel RxFrequency: " << i << ": " << ss[i]->GetPhy()->GetRxFrequency());
+	  NS_LOG_INFO( "Channel Frequency: " << i << ": " << ss[i]->GetPhy()->GetFrequency());
+  }
+  for(int i=0;i<mxBS;i++){
+	  NS_LOG_INFO( "Channel Bandwidth: " << bs[i]->GetPhy()->GetChannelBandwidth());
+	  NS_LOG_INFO( "Channel TxFrequency: " << bs[i]->GetPhy()->GetTxFrequency());
+	  NS_LOG_INFO( "Channel RxFrequency: " << bs[i]->GetPhy()->GetRxFrequency());
+	  NS_LOG_INFO( "Channel Frequency: " << bs[i]->GetPhy()->GetFrequency());
+
+	  NS_LOG_INFO( "Transmit Power: " << bs[i]->GetPhy()->GetTxPower());
+	  NS_LOG_INFO( "Number of SSs: " << bs[i]->GetSSManager()->GetNSSs());
+	  NS_LOG_INFO( "Number of SSs: " << bs[i]->GetSSManager()->GetNRegisteredSSs());
+  }
 
   for(int i=0;i<mxSS;i++){
 	  ss[i] = 0;

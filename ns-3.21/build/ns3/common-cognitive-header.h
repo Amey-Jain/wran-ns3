@@ -35,8 +35,11 @@
 #define MAX_RADIO	3
 #define	MAX_CHANNELS 	1 //#modify to accomodate changes (he says dont modify, why ?)
 
+#define MAX_ITERATION 10
+#define P_MAX 40 // in dbm, 10W
+
 #define MAX_TRANSMISSION_RANGE 30000 // 30km
-#define PACKET_SEPARATOR '|'
+#define GAUSSIAN_NOISE std::pow(10.0,(-131.214 / 10)) // (-114 + m_noiseFigure + 10 * std::log (GetBandwidth () / 1000000000.0) / 2.303) //in dbm
 
 #define SENSING_VERBOSE_MODE true
 

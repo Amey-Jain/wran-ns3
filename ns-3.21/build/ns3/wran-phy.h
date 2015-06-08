@@ -326,6 +326,7 @@ public:
   * \return the number of stream indices assigned by this model
   */
   virtual int64_t AssignStreams (int64_t stream) = 0;
+  virtual double GetRxPower (void) const = 0;
 
 //  /**
 //     * \param callback the callback to invoke

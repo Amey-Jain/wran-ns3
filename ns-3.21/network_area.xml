@@ -1,81 +1,57 @@
 <anim ver="netanim-3.105" >
-<node id="0" sysId="0" locX="448.577251" locY="700.6139984" >
-<node id="1" sysId="0" locX="1014.344412" locY="1293.967641" >
-<node id="2" sysId="0" locX="744.2543319" locY="1286.461876" >
-<node id="3" sysId="0" locX="435.5260333" locY="268.162759" >
-<node id="4" sysId="0" locX="1134.399614" locY="26.1294259" >
-<node id="5" sysId="0" locX="1159.644511" locY="865.1669326" >
-<node id="6" sysId="0" locX="784.7408187" locY="1230.911593" >
-<node id="7" sysId="0" locX="856.2116967" locY="477.6961128" >
-<node id="8" sysId="0" locX="666.6048786" locY="1393.967008" >
-<node id="9" sysId="0" locX="488.1554508" locY="580.2124945" >
-<node id="10" sysId="0" locX="763.5428769" locY="352.9461577" >
-<node id="11" sysId="0" locX="846.232995" locY="760.4959267" >
-<node id="12" sysId="0" locX="730.06384" locY="1418.33985" >
-<node id="13" sysId="0" locX="973.2208928" locY="737.4815995" >
-<node id="14" sysId="0" locX="1456.017706" locY="1270.200856" >
-<node id="15" sysId="0" locX="834.1236653" locY="566.1516739" >
-<node id="16" sysId="0" locX="239.5332318" locY="675.4364732" >
-<node id="17" sysId="0" locX="1385.991718" locY="1214.622034" >
-<node id="18" sysId="0" locX="805.2713751" locY="208.990031" >
-<node id="19" sysId="0" locX="1167.988467" locY="1332.995948" >
-<node id="20" sysId="0" locX="727.103057" locY="159.1631015" >
-<node id="21" sysId="0" locX="201.5983024" locY="1379.79746" >
-<node id="22" sysId="0" locX="170.2381656" locY="346.1914634" >
-<node id="23" sysId="0" locX="704.496949" locY="423.029008" >
-<node id="24" sysId="0" locX="709.954925" locY="111.9909309" >
-<node id="25" sysId="0" locX="146.3484462" locY="129.9525775" >
-<node id="26" sysId="0" locX="1400.947622" locY="844.8581683" >
-<node id="27" sysId="0" locX="1157.057988" locY="169.5960909" >
-<node id="28" sysId="0" locX="1120.243034" locY="153.3955301" >
-<node id="29" sysId="0" locX="1080.738513" locY="496.9097528" >
-<node id="30" sysId="0" locX="63.73878542" locY="1067.397219" >
-<node id="31" sysId="0" locX="684.3226917" locY="1123.168275" >
-<node id="32" sysId="0" locX="340.1730434" locY="970.7545448" >
-<node id="33" sysId="0" locX="819.1392912" locY="562.2874885" >
-<node id="34" sysId="0" locX="844.9572849" locY="1387.681383" >
-<node id="35" sysId="0" locX="665.6452244" locY="167.8068752" >
-<node id="36" sysId="0" locX="1040.625786" locY="815.208581" >
-<node id="37" sysId="0" locX="711.1195689" locY="1339.733111" >
-<node id="38" sysId="0" locX="549.6502926" locY="869.2466461" >
-<node id="39" sysId="0" locX="455.3900053" locY="46.58611126" >
-<node id="40" sysId="0" locX="1058.833372" locY="879.7000381" >
-<node id="41" sysId="0" locX="75.41470893" locY="797.0891925" >
-<node id="42" sysId="0" locX="144.6732077" locY="1335.531307" >
-<node id="43" sysId="0" locX="638.1585993" locY="191.7814478" >
-<node id="44" sysId="0" locX="907.8991439" locY="368.2237545" >
-<node id="45" sysId="0" locX="1306.704879" locY="452.379111" >
-<node id="46" sysId="0" locX="1435.849022" locY="782.4994691" >
-<node id="47" sysId="0" locX="761.5705546" locY="228.1023646" >
-<node id="48" sysId="0" locX="1022.811071" locY="668.0255155" >
-<node id="49" sysId="0" locX="1282.362389" locY="1426.864687" >
-<node id="50" sysId="0" locX="550" locY="300" >
-<node id="51" sysId="0" locX="1050" locY="300" >
-<node id="52" sysId="0" locX="300" locY="725.4517623" >
-<node id="53" sysId="0" locX="800" locY="725.4517623" >
-<node id="54" sysId="0" locX="1300" locY="725.4517623" >
-<node id="55" sysId="0" locX="550" locY="1150.903525" >
-<node id="56" sysId="0" locX="1050" locY="1150.903525" >
-<node id="57" sysId="0" locX="304.4285221" locY="207.329714" >
-<node id="58" sysId="0" locX="1003.911869" locY="78.08048286" >
-<node id="59" sysId="0" locX="880.0330767" locY="188.0943911" >
-<node id="60" sysId="0" locX="1530.143755" locY="665.9274277" >
-<node id="61" sysId="0" locX="1029.172652" locY="1390.80159" >
-<node id="62" sysId="0" locX="396.6572514" locY="1263.445698" >
-<node id="63" sysId="0" locX="866.1460949" locY="1166.098475" >
-<node id="64" sysId="0" locX="341.4981575" locY="772.0960695" >
-<node id="65" sysId="0" locX="1599.634935" locY="186.9848715" >
-<node id="66" sysId="0" locX="1256.989474" locY="678.9206844" >
-<node id="67" sysId="0" locX="296.6334271" locY="920.5541251" >
-<node id="68" sysId="0" locX="744.8040313" locY="417.4300075" >
-<node id="69" sysId="0" locX="1350.729643" locY="1317.575797" >
-<node id="70" sysId="0" locX="585.1441372" locY="1297.327568" >
-<node id="71" sysId="0" locX="69.16446723" locY="197.1429772" >
-<node id="72" sysId="0" locX="1350.818544" locY="250.6345954" >
-<node id="73" sysId="0" locX="1201.619783" locY="1334.267692" >
-<node id="74" sysId="0" locX="1198.883526" locY="1441.481774" >
-<node id="75" sysId="0" locX="839.7015878" locY="906.8420148" >
-<node id="76" sysId="0" locX="1442.687798" locY="36.26936806" >
+<node id="0" sysId="0" locX="1064.127312" locY="774.4787426" >
+<node id="1" sysId="0" locX="1322.456261" locY="1024.660878" >
+<node id="2" sysId="0" locX="1101.936952" locY="663.002752" >
+<node id="3" sysId="0" locX="126.9037509" locY="709.978429" >
+<node id="4" sysId="0" locX="787.1714392" locY="1410.857444" >
+<node id="5" sysId="0" locX="922.0632743" locY="15.57915391" >
+<node id="6" sysId="0" locX="945.9663711" locY="1329.215976" >
+<node id="7" sysId="0" locX="917.2481854" locY="485.3580427" >
+<node id="8" sysId="0" locX="643.0893002" locY="977.1603002" >
+<node id="9" sysId="0" locX="1182.987171" locY="569.1799748" >
+<node id="10" sysId="0" locX="1351.635879" locY="858.4284829" >
+<node id="11" sysId="0" locX="1023.760679" locY="1020.642132" >
+<node id="12" sysId="0" locX="808.3816029" locY="1390.91842" >
+<node id="13" sysId="0" locX="483.2871354" locY="256.2940639" >
+<node id="14" sysId="0" locX="510.7400829" locY="116.4128962" >
+<node id="15" sysId="0" locX="241.2335997" locY="128.3270733" >
+<node id="16" sysId="0" locX="1274.960117" locY="254.1160564" >
+<node id="17" sysId="0" locX="1261.91053" locY="131.1413878" >
+<node id="18" sysId="0" locX="1273.24725" locY="390.6876252" >
+<node id="19" sysId="0" locX="950.3133984" locY="215.5874539" >
+<node id="20" sysId="0" locX="1083.497838" locY="772.8377476" >
+<node id="21" sysId="0" locX="236.6358313" locY="19.57217853" >
+<node id="22" sysId="0" locX="524.9779959" locY="1409.458627" >
+<node id="23" sysId="0" locX="1180.589076" locY="523.5992422" >
+<node id="24" sysId="0" locX="673.0341991" locY="828.8064355" >
+<node id="25" sysId="0" locX="1237.454066" locY="781.5156024" >
+<node id="26" sysId="0" locX="249.8681446" locY="1304.783231" >
+<node id="27" sysId="0" locX="1169.744531" locY="1113.61658" >
+<node id="28" sysId="0" locX="1073.799793" locY="498.4007053" >
+<node id="29" sysId="0" locX="629.262698" locY="109.1287268" >
+<node id="30" sysId="0" locX="550" locY="300" >
+<node id="31" sysId="0" locX="1050" locY="300" >
+<node id="32" sysId="0" locX="300" locY="725.4517623" >
+<node id="33" sysId="0" locX="1523.648924" locY="1085.082709" >
+<node id="34" sysId="0" locX="940.4001785" locY="222.4659033" >
+<node id="35" sysId="0" locX="941.3395801" locY="604.4287395" >
+<node id="36" sysId="0" locX="740.8454494" locY="143.0804986" >
+<node id="37" sysId="0" locX="1030.233715" locY="391.6894596" >
+<node id="38" sysId="0" locX="76.54308302" locY="699.4173794" >
+<node id="39" sysId="0" locX="1448.561483" locY="86.47941208" >
+<node id="40" sysId="0" locX="429.1702881" locY="944.3888417" >
+<node id="41" sysId="0" locX="1537.387972" locY="1209.325596" >
+<node id="42" sysId="0" locX="334.1086486" locY="318.185248" >
+<node id="43" sysId="0" locX="984.0855576" locY="1422.020007" >
+<node id="44" sysId="0" locX="175.5162499" locY="690.4151144" >
+<node id="45" sysId="0" locX="294.7289852" locY="461.6563097" >
+<node id="46" sysId="0" locX="1326.466527" locY="1177.188199" >
+<node id="47" sysId="0" locX="386.3298983" locY="131.7453804" >
+<node id="48" sysId="0" locX="1205.78197" locY="376.5935689" >
+<node id="49" sysId="0" locX="1542.345149" locY="274.5819317" >
+<node id="50" sysId="0" locX="372.2680894" locY="136.7517831" >
+<node id="51" sysId="0" locX="1089.492091" locY="105.4060551" >
+<node id="52" sysId="0" locX="1355.011173" locY="883.8732206" >
 <nu p="c" t="0" id="0" r="255" g="0" b="0" >
 <nu p="c" t="0" id="1" r="255" g="0" b="0" >
 <nu p="c" t="0" id="2" r="255" g="0" b="0" >
@@ -129,30 +105,6 @@
 <nu p="c" t="0" id="50" r="255" g="0" b="0" >
 <nu p="c" t="0" id="51" r="255" g="0" b="0" >
 <nu p="c" t="0" id="52" r="255" g="0" b="0" >
-<nu p="c" t="0" id="53" r="255" g="0" b="0" >
-<nu p="c" t="0" id="54" r="255" g="0" b="0" >
-<nu p="c" t="0" id="55" r="255" g="0" b="0" >
-<nu p="c" t="0" id="56" r="255" g="0" b="0" >
-<nu p="c" t="0" id="57" r="255" g="0" b="0" >
-<nu p="c" t="0" id="58" r="255" g="0" b="0" >
-<nu p="c" t="0" id="59" r="255" g="0" b="0" >
-<nu p="c" t="0" id="60" r="255" g="0" b="0" >
-<nu p="c" t="0" id="61" r="255" g="0" b="0" >
-<nu p="c" t="0" id="62" r="255" g="0" b="0" >
-<nu p="c" t="0" id="63" r="255" g="0" b="0" >
-<nu p="c" t="0" id="64" r="255" g="0" b="0" >
-<nu p="c" t="0" id="65" r="255" g="0" b="0" >
-<nu p="c" t="0" id="66" r="255" g="0" b="0" >
-<nu p="c" t="0" id="67" r="255" g="0" b="0" >
-<nu p="c" t="0" id="68" r="255" g="0" b="0" >
-<nu p="c" t="0" id="69" r="255" g="0" b="0" >
-<nu p="c" t="0" id="70" r="255" g="0" b="0" >
-<nu p="c" t="0" id="71" r="255" g="0" b="0" >
-<nu p="c" t="0" id="72" r="255" g="0" b="0" >
-<nu p="c" t="0" id="73" r="255" g="0" b="0" >
-<nu p="c" t="0" id="74" r="255" g="0" b="0" >
-<nu p="c" t="0" id="75" r="255" g="0" b="0" >
-<nu p="c" t="0" id="76" r="255" g="0" b="0" >
 <nonp2plinkproperties id="0" ipv4Address="10.1.1.1~00:00:00:00:00:01" channelType="ns3::WimaxChannel" >
 <nonp2plinkproperties id="1" ipv4Address="10.1.1.2~00:00:00:00:00:02" channelType="ns3::WimaxChannel" >
 <nonp2plinkproperties id="2" ipv4Address="10.1.1.3~00:00:00:00:00:03" channelType="ns3::WimaxChannel" >
@@ -186,30 +138,6 @@
 <nonp2plinkproperties id="30" ipv4Address="10.1.1.31~00:00:00:00:00:1f" channelType="ns3::WimaxChannel" >
 <nonp2plinkproperties id="31" ipv4Address="10.1.1.32~00:00:00:00:00:20" channelType="ns3::WimaxChannel" >
 <nonp2plinkproperties id="32" ipv4Address="10.1.1.33~00:00:00:00:00:21" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="33" ipv4Address="10.1.1.34~00:00:00:00:00:22" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="34" ipv4Address="10.1.1.35~00:00:00:00:00:23" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="35" ipv4Address="10.1.1.36~00:00:00:00:00:24" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="36" ipv4Address="10.1.1.37~00:00:00:00:00:25" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="37" ipv4Address="10.1.1.38~00:00:00:00:00:26" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="38" ipv4Address="10.1.1.39~00:00:00:00:00:27" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="39" ipv4Address="10.1.1.40~00:00:00:00:00:28" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="40" ipv4Address="10.1.1.41~00:00:00:00:00:29" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="41" ipv4Address="10.1.1.42~00:00:00:00:00:2a" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="42" ipv4Address="10.1.1.43~00:00:00:00:00:2b" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="43" ipv4Address="10.1.1.44~00:00:00:00:00:2c" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="44" ipv4Address="10.1.1.45~00:00:00:00:00:2d" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="45" ipv4Address="10.1.1.46~00:00:00:00:00:2e" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="46" ipv4Address="10.1.1.47~00:00:00:00:00:2f" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="47" ipv4Address="10.1.1.48~00:00:00:00:00:30" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="48" ipv4Address="10.1.1.49~00:00:00:00:00:31" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="49" ipv4Address="10.1.1.50~00:00:00:00:00:32" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="50" ipv4Address="10.1.1.51~00:00:00:00:00:33" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="51" ipv4Address="10.1.1.52~00:00:00:00:00:34" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="52" ipv4Address="10.1.1.53~00:00:00:00:00:35" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="53" ipv4Address="10.1.1.54~00:00:00:00:00:36" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="54" ipv4Address="10.1.1.55~00:00:00:00:00:37" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="55" ipv4Address="10.1.1.56~00:00:00:00:00:38" channelType="ns3::WimaxChannel" >
-<nonp2plinkproperties id="56" ipv4Address="10.1.1.57~00:00:00:00:00:39" channelType="ns3::WimaxChannel" >
 <nu p="s" t="0" id="0" w="1" h="1" >
 <nu p="s" t="0" id="1" w="1" h="1" >
 <nu p="s" t="0" id="2" w="1" h="1" >
@@ -263,30 +191,6 @@
 <nu p="s" t="0" id="50" w="1" h="1" >
 <nu p="s" t="0" id="51" w="1" h="1" >
 <nu p="s" t="0" id="52" w="1" h="1" >
-<nu p="s" t="0" id="53" w="1" h="1" >
-<nu p="s" t="0" id="54" w="1" h="1" >
-<nu p="s" t="0" id="55" w="1" h="1" >
-<nu p="s" t="0" id="56" w="1" h="1" >
-<nu p="s" t="0" id="57" w="1" h="1" >
-<nu p="s" t="0" id="58" w="1" h="1" >
-<nu p="s" t="0" id="59" w="1" h="1" >
-<nu p="s" t="0" id="60" w="1" h="1" >
-<nu p="s" t="0" id="61" w="1" h="1" >
-<nu p="s" t="0" id="62" w="1" h="1" >
-<nu p="s" t="0" id="63" w="1" h="1" >
-<nu p="s" t="0" id="64" w="1" h="1" >
-<nu p="s" t="0" id="65" w="1" h="1" >
-<nu p="s" t="0" id="66" w="1" h="1" >
-<nu p="s" t="0" id="67" w="1" h="1" >
-<nu p="s" t="0" id="68" w="1" h="1" >
-<nu p="s" t="0" id="69" w="1" h="1" >
-<nu p="s" t="0" id="70" w="1" h="1" >
-<nu p="s" t="0" id="71" w="1" h="1" >
-<nu p="s" t="0" id="72" w="1" h="1" >
-<nu p="s" t="0" id="73" w="1" h="1" >
-<nu p="s" t="0" id="74" w="1" h="1" >
-<nu p="s" t="0" id="75" w="1" h="1" >
-<nu p="s" t="0" id="76" w="1" h="1" >
 <ncs ncId="0" n="RemainingEnergy" t="DOUBLE" >
 <res rid="0" p="/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/ss.png" >
 <res rid="1" p="/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/bs.png" >
@@ -382,144 +286,72 @@
 <nu p="s" t="0" id="29" w="50" h="50" >
 <nu p="i" t="0" id="29" rid="0" >
 <nu p="d" t="0" id="29" descr="CPE" >
-<nu p="s" t="0" id="30" w="50" h="50" >
-<nu p="i" t="0" id="30" rid="0" >
-<nu p="d" t="0" id="30" descr="CPE" >
-<nu p="s" t="0" id="31" w="50" h="50" >
-<nu p="i" t="0" id="31" rid="0" >
-<nu p="d" t="0" id="31" descr="CPE" >
-<nu p="s" t="0" id="32" w="50" h="50" >
-<nu p="i" t="0" id="32" rid="0" >
-<nu p="d" t="0" id="32" descr="CPE" >
+<nu p="s" t="0" id="30" w="75" h="75" >
+<nu p="i" t="0" id="30" rid="1" >
+<nu p="d" t="0" id="30" descr="BS" >
+<nu p="s" t="0" id="31" w="75" h="75" >
+<nu p="i" t="0" id="31" rid="1" >
+<nu p="d" t="0" id="31" descr="BS" >
+<nu p="s" t="0" id="32" w="75" h="75" >
+<nu p="i" t="0" id="32" rid="1" >
+<nu p="d" t="0" id="32" descr="BS" >
 <nu p="s" t="0" id="33" w="50" h="50" >
-<nu p="i" t="0" id="33" rid="0" >
-<nu p="d" t="0" id="33" descr="CPE" >
+<nu p="i" t="0" id="33" rid="2" >
+<nu p="d" t="0" id="33" descr="PUTx" >
 <nu p="s" t="0" id="34" w="50" h="50" >
-<nu p="i" t="0" id="34" rid="0" >
-<nu p="d" t="0" id="34" descr="CPE" >
+<nu p="i" t="0" id="34" rid="2" >
+<nu p="d" t="0" id="34" descr="PUTx" >
 <nu p="s" t="0" id="35" w="50" h="50" >
-<nu p="i" t="0" id="35" rid="0" >
-<nu p="d" t="0" id="35" descr="CPE" >
+<nu p="i" t="0" id="35" rid="2" >
+<nu p="d" t="0" id="35" descr="PUTx" >
 <nu p="s" t="0" id="36" w="50" h="50" >
-<nu p="i" t="0" id="36" rid="0" >
-<nu p="d" t="0" id="36" descr="CPE" >
+<nu p="i" t="0" id="36" rid="2" >
+<nu p="d" t="0" id="36" descr="PUTx" >
 <nu p="s" t="0" id="37" w="50" h="50" >
-<nu p="i" t="0" id="37" rid="0" >
-<nu p="d" t="0" id="37" descr="CPE" >
+<nu p="i" t="0" id="37" rid="2" >
+<nu p="d" t="0" id="37" descr="PUTx" >
 <nu p="s" t="0" id="38" w="50" h="50" >
-<nu p="i" t="0" id="38" rid="0" >
-<nu p="d" t="0" id="38" descr="CPE" >
+<nu p="i" t="0" id="38" rid="3" >
+<nu p="d" t="0" id="38" descr="PURx" >
 <nu p="s" t="0" id="39" w="50" h="50" >
-<nu p="i" t="0" id="39" rid="0" >
-<nu p="d" t="0" id="39" descr="CPE" >
+<nu p="i" t="0" id="39" rid="3" >
+<nu p="d" t="0" id="39" descr="PURx" >
 <nu p="s" t="0" id="40" w="50" h="50" >
-<nu p="i" t="0" id="40" rid="0" >
-<nu p="d" t="0" id="40" descr="CPE" >
+<nu p="i" t="0" id="40" rid="3" >
+<nu p="d" t="0" id="40" descr="PURx" >
 <nu p="s" t="0" id="41" w="50" h="50" >
-<nu p="i" t="0" id="41" rid="0" >
-<nu p="d" t="0" id="41" descr="CPE" >
+<nu p="i" t="0" id="41" rid="3" >
+<nu p="d" t="0" id="41" descr="PURx" >
 <nu p="s" t="0" id="42" w="50" h="50" >
-<nu p="i" t="0" id="42" rid="0" >
-<nu p="d" t="0" id="42" descr="CPE" >
+<nu p="i" t="0" id="42" rid="3" >
+<nu p="d" t="0" id="42" descr="PURx" >
 <nu p="s" t="0" id="43" w="50" h="50" >
-<nu p="i" t="0" id="43" rid="0" >
-<nu p="d" t="0" id="43" descr="CPE" >
+<nu p="i" t="0" id="43" rid="3" >
+<nu p="d" t="0" id="43" descr="PURx" >
 <nu p="s" t="0" id="44" w="50" h="50" >
-<nu p="i" t="0" id="44" rid="0" >
-<nu p="d" t="0" id="44" descr="CPE" >
+<nu p="i" t="0" id="44" rid="3" >
+<nu p="d" t="0" id="44" descr="PURx" >
 <nu p="s" t="0" id="45" w="50" h="50" >
-<nu p="i" t="0" id="45" rid="0" >
-<nu p="d" t="0" id="45" descr="CPE" >
+<nu p="i" t="0" id="45" rid="3" >
+<nu p="d" t="0" id="45" descr="PURx" >
 <nu p="s" t="0" id="46" w="50" h="50" >
-<nu p="i" t="0" id="46" rid="0" >
-<nu p="d" t="0" id="46" descr="CPE" >
+<nu p="i" t="0" id="46" rid="3" >
+<nu p="d" t="0" id="46" descr="PURx" >
 <nu p="s" t="0" id="47" w="50" h="50" >
-<nu p="i" t="0" id="47" rid="0" >
-<nu p="d" t="0" id="47" descr="CPE" >
+<nu p="i" t="0" id="47" rid="3" >
+<nu p="d" t="0" id="47" descr="PURx" >
 <nu p="s" t="0" id="48" w="50" h="50" >
-<nu p="i" t="0" id="48" rid="0" >
-<nu p="d" t="0" id="48" descr="CPE" >
+<nu p="i" t="0" id="48" rid="3" >
+<nu p="d" t="0" id="48" descr="PURx" >
 <nu p="s" t="0" id="49" w="50" h="50" >
-<nu p="i" t="0" id="49" rid="0" >
-<nu p="d" t="0" id="49" descr="CPE" >
-<nu p="s" t="0" id="50" w="75" h="75" >
-<nu p="i" t="0" id="50" rid="1" >
-<nu p="d" t="0" id="50" descr="BS" >
-<nu p="s" t="0" id="51" w="75" h="75" >
-<nu p="i" t="0" id="51" rid="1" >
-<nu p="d" t="0" id="51" descr="BS" >
-<nu p="s" t="0" id="52" w="75" h="75" >
-<nu p="i" t="0" id="52" rid="1" >
-<nu p="d" t="0" id="52" descr="BS" >
-<nu p="s" t="0" id="53" w="75" h="75" >
-<nu p="i" t="0" id="53" rid="1" >
-<nu p="d" t="0" id="53" descr="BS" >
-<nu p="s" t="0" id="54" w="75" h="75" >
-<nu p="i" t="0" id="54" rid="1" >
-<nu p="d" t="0" id="54" descr="BS" >
-<nu p="s" t="0" id="55" w="75" h="75" >
-<nu p="i" t="0" id="55" rid="1" >
-<nu p="d" t="0" id="55" descr="BS" >
-<nu p="s" t="0" id="56" w="75" h="75" >
-<nu p="i" t="0" id="56" rid="1" >
-<nu p="d" t="0" id="56" descr="BS" >
-<nu p="s" t="0" id="57" w="50" h="50" >
-<nu p="i" t="0" id="57" rid="2" >
-<nu p="d" t="0" id="57" descr="PUTx" >
-<nu p="s" t="0" id="58" w="50" h="50" >
-<nu p="i" t="0" id="58" rid="2" >
-<nu p="d" t="0" id="58" descr="PUTx" >
-<nu p="s" t="0" id="59" w="50" h="50" >
-<nu p="i" t="0" id="59" rid="2" >
-<nu p="d" t="0" id="59" descr="PUTx" >
-<nu p="s" t="0" id="60" w="50" h="50" >
-<nu p="i" t="0" id="60" rid="2" >
-<nu p="d" t="0" id="60" descr="PUTx" >
-<nu p="s" t="0" id="61" w="50" h="50" >
-<nu p="i" t="0" id="61" rid="2" >
-<nu p="d" t="0" id="61" descr="PUTx" >
-<nu p="s" t="0" id="62" w="50" h="50" >
-<nu p="i" t="0" id="62" rid="3" >
-<nu p="d" t="0" id="62" descr="PURx" >
-<nu p="s" t="0" id="63" w="50" h="50" >
-<nu p="i" t="0" id="63" rid="3" >
-<nu p="d" t="0" id="63" descr="PURx" >
-<nu p="s" t="0" id="64" w="50" h="50" >
-<nu p="i" t="0" id="64" rid="3" >
-<nu p="d" t="0" id="64" descr="PURx" >
-<nu p="s" t="0" id="65" w="50" h="50" >
-<nu p="i" t="0" id="65" rid="3" >
-<nu p="d" t="0" id="65" descr="PURx" >
-<nu p="s" t="0" id="66" w="50" h="50" >
-<nu p="i" t="0" id="66" rid="3" >
-<nu p="d" t="0" id="66" descr="PURx" >
-<nu p="s" t="0" id="67" w="50" h="50" >
-<nu p="i" t="0" id="67" rid="3" >
-<nu p="d" t="0" id="67" descr="PURx" >
-<nu p="s" t="0" id="68" w="50" h="50" >
-<nu p="i" t="0" id="68" rid="3" >
-<nu p="d" t="0" id="68" descr="PURx" >
-<nu p="s" t="0" id="69" w="50" h="50" >
-<nu p="i" t="0" id="69" rid="3" >
-<nu p="d" t="0" id="69" descr="PURx" >
-<nu p="s" t="0" id="70" w="50" h="50" >
-<nu p="i" t="0" id="70" rid="3" >
-<nu p="d" t="0" id="70" descr="PURx" >
-<nu p="s" t="0" id="71" w="50" h="50" >
-<nu p="i" t="0" id="71" rid="3" >
-<nu p="d" t="0" id="71" descr="PURx" >
-<nu p="s" t="0" id="72" w="50" h="50" >
-<nu p="i" t="0" id="72" rid="3" >
-<nu p="d" t="0" id="72" descr="PURx" >
-<nu p="s" t="0" id="73" w="50" h="50" >
-<nu p="i" t="0" id="73" rid="3" >
-<nu p="d" t="0" id="73" descr="PURx" >
-<nu p="s" t="0" id="74" w="50" h="50" >
-<nu p="i" t="0" id="74" rid="3" >
-<nu p="d" t="0" id="74" descr="PURx" >
-<nu p="s" t="0" id="75" w="50" h="50" >
-<nu p="i" t="0" id="75" rid="3" >
-<nu p="d" t="0" id="75" descr="PURx" >
-<nu p="s" t="0" id="76" w="50" h="50" >
-<nu p="i" t="0" id="76" rid="3" >
-<nu p="d" t="0" id="76" descr="PURx" >
+<nu p="i" t="0" id="49" rid="3" >
+<nu p="d" t="0" id="49" descr="PURx" >
+<nu p="s" t="0" id="50" w="50" h="50" >
+<nu p="i" t="0" id="50" rid="3" >
+<nu p="d" t="0" id="50" descr="PURx" >
+<nu p="s" t="0" id="51" w="50" h="50" >
+<nu p="i" t="0" id="51" rid="3" >
+<nu p="d" t="0" id="51" descr="PURx" >
+<nu p="s" t="0" id="52" w="50" h="50" >
+<nu p="i" t="0" id="52" rid="3" >
+<nu p="d" t="0" id="52" descr="PURx" >

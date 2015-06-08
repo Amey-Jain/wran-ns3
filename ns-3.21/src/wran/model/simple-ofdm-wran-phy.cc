@@ -147,9 +147,13 @@ SimpleOfdmWranPhy::InitSimpleOfdmWranPhy (void)
   m_noiseFigure = 5; // dB
   m_txPower = 30; // dBm
   SetBandwidth (6000000); // 6Mhz
+  SetNumberOfSubChannel(60);
   m_nbErroneousBlock = 0;
   m_nrRecivedFecBlocks = 0;
   m_snrToBlockErrorRateManager = new SNRToBlockErrorRateManager ();
+
+//  m_txPowerSubChannel = new std::vector<double>();
+//  m_rxPowerSubChannel = new std::vector<double>();
 }
 
 SimpleOfdmWranPhy::SimpleOfdmWranPhy (void)
@@ -170,7 +174,13 @@ SimpleOfdmWranPhy::SimpleOfdmWranPhy (char * tracesPath)
 
 SimpleOfdmWranPhy::~SimpleOfdmWranPhy (void)
 {
+	m_txPowerSubChannel.clear();
+//	delete m_txPowerSubChannel;
+//	m_txPowerSubChannel = 0;
 
+	m_rxPowerSubChannel.clear();
+//	delete m_rxPowerSubChannel;
+//	m_rxPowerSubChannel = 0;
 }
 
 void
@@ -210,6 +220,59 @@ SimpleOfdmWranPhy::SetTxPower (double txPower)
 }
 
 double
+SimpleOfdmWranPhy::GetRxPower (void) const
+{
+  return m_rxPower;
+}
+void
+SimpleOfdmWranPhy::SetRxPower (double rxPower)
+{
+  m_rxPower = rxPower;
+}
+
+double
+SimpleOfdmWranPhy::GetTxPowerSubChannel (uint16_t nrSubChannel) const
+{
+	return m_txPowerSubChannel[nrSubChannel];
+}
+
+void
+SimpleOfdmWranPhy::SetTxPowerSubChannel (uint16_t nrSubChannel, double txPower)
+{
+	m_txPowerSubChannel[nrSubChannel] = txPower;
+}
+
+double
+SimpleOfdmWranPhy::GetRxPowerSubChannel (uint16_t nrSubChannel) const
+{
+	return m_rxPowerSubChannel[nrSubChannel];
+}
+
+void
+SimpleOfdmWranPhy::SetRxPowerSubChannel (uint16_t nrSubChannel, double rxPower)
+{
+	m_rxPowerSubChannel[nrSubChannel] = rxPower;
+}
+
+
+
+void
+SimpleOfdmWranPhy::SetNumberOfSubChannel (uint16_t nrOfSubChannel)
+{
+	m_numberOfSubchannel = nrOfSubChannel;
+	m_txPowerSubChannel.clear();
+	m_txPowerSubChannel.resize(nrOfSubChannel, 0);
+	m_rxPowerSubChannel.clear();
+	m_rxPowerSubChannel.resize(nrOfSubChannel, 0);
+}
+
+uint16_t
+SimpleOfdmWranPhy::GetNumberOfSubChannel (void) const
+{
+	return m_numberOfSubchannel;
+}
+
+double
 SimpleOfdmWranPhy::GetNoiseFigure (void) const
 {
   return m_noiseFigure;
@@ -228,6 +291,8 @@ SimpleOfdmWranPhy::DoDispose (void)
   m_receivedFecBlocks = 0;
   m_fecBlocks = 0;
   delete m_snrToBlockErrorRateManager;
+  m_txPowerSubChannel.clear();
+  m_rxPowerSubChannel.clear();
   WranPhy::DoDispose ();
 }
 
@@ -308,7 +373,8 @@ SimpleOfdmWranPhy::StartSendDummyFecBlock (bool isFirstBlock,
                  GetTxFrequency (),
                  modulationType,
                  direction,
-                 m_txPower,
+                 GetNumberOfSubChannel(),
+                 &m_txPowerSubChannel,
                  m_currentBurst);
 
   NS_LOG_INFO("After Sending");
@@ -359,7 +425,7 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
   uint8_t drop = 0;
   double Nwb = -114 + m_noiseFigure + 10 * std::log (GetBandwidth () / 1000000000.0) / 2.303;
   double SNR = rxPower - Nwb;
-
+  SetRxPower(rxPower);
   SNRToBlockErrorRateRecord * record = m_snrToBlockErrorRateManager->GetSNRToBlockErrorRateRecord (SNR, modulationType);
   double I1 = record->GetI1 ();
   double I2 = record->GetI2 ();
@@ -393,6 +459,7 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
   switch (GetState ())
     {
     case PHY_STATE_SCANNING:
+    	NS_LOG_INFO("Packet dropped for scanning state");
       if (frequency == GetScanningFrequency ())
         {
           Simulator::Cancel (GetChnlSrchTimeoutEvent ());
@@ -427,6 +494,7 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
         }
       break;
     case PHY_STATE_RX:
+    	NS_LOG_INFO("Packet dropped for receving state");
       // drop
       break;
     case PHY_STATE_TX:
@@ -434,6 +502,7 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
         {
 
         }
+      NS_LOG_INFO("Packet dropped for transmitting state");
       break;
     }
 }
@@ -1113,6 +1182,18 @@ SimpleOfdmWranPhy::AssignStreams (int64_t stream)
   NS_LOG_FUNCTION (this << stream);
   m_URNG->SetStream (stream);
   return 1;
+}
+
+std::vector<double>
+SimpleOfdmWranPhy::GetTxPowerListSubChannel () const
+{
+	return m_txPowerSubChannel;
+}
+
+std::vector<double>
+SimpleOfdmWranPhy::GetRxPowerListSubChannel () const
+{
+	return m_rxPowerSubChannel;
 }
 /* ------------------------- Cognitive Functions --------------------- */
 //bool

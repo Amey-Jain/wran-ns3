@@ -33,10 +33,10 @@ TypeId SpectrumManager::GetTypeId (void)
 }
 
 //SpectrumManager Initializer
-SpectrumManager::SpectrumManager(Ptr<WranNetDevice> wranNetDevice, int id) {
+SpectrumManager::SpectrumManager(/*Ptr<WranNetDevice> wranNetDevice, */int id) {
 
 //	m_wifiMac=mac;
-	m_wranNetDevice = wranNetDevice;
+	m_wranNetDevice = NULL;
 	m_nodeId = id;
 
 	// State Initialization
@@ -108,22 +108,22 @@ SpectrumManager::IsChannelAvailable() {
 
 // is_PU_interfering: return true if there is a PU which is transmitting on the same channel and within the tx range of the CR receiving a packet
 bool 
-SpectrumManager::IsPuInterfering(Time txDuration) {
+SpectrumManager::IsPuInterfering(Time txDuration, int current_channel) {
 
 	// Get the tx time of a packet
 	Time time_tx=txDuration;
 	// Check if a PU is active in the interval [now: now+time_tx]
-	int  current_channel=m_repository->GetRxChannel(m_nodeId);
+//	int  current_channel=m_repository->GetRxChannel(m_nodeId);
 	bool interference=m_sensingMod->GetSenseResultsFuture(m_nodeId,time_tx,m_transmitTime, current_channel);
 
-#ifdef SENSING_VERBOSE_MODE
-	if (interference)
-	  {
-	    char buffer [50];
-	    std::sprintf(buffer, "[SENSING-DBG] Node %d sensed some PU activity on channel %d while receiving data\n", m_nodeId,current_channel);
-	    NS_LOG_DEBUG (buffer);
-	  }
-#endif
+//#ifdef SENSING_VERBOSE_MODE
+//	if (interference)
+//	  {
+//	    char buffer [50];
+//	    std::sprintf(buffer, "[SENSING-DBG] Node %d sensed some PU activity on channel %d while receiving data\n", m_nodeId,current_channel);
+//	    NS_LOG_DEBUG (buffer);
+//	  }
+//#endif
 	return interference;
 }
 

@@ -45,7 +45,6 @@
 #include "wran-burst-profile-manager.h"
 #include "wran-ss-link-manager.h"
 #include "wran-bandwidth-manager.h"
-#include "common-cognitive-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("WranSubscriberStationNetDevice");
 
@@ -562,9 +561,10 @@ WranSubscriberStationNetDevice::Start (void)
   GetPhy ()->SetDataRates ();
   m_intervalT20 = Seconds (4 * GetPhy ()->GetFrameDuration ().GetSeconds ());
 
-  SetTotalChannels(10);
+  SetTotalChannels(MAX_CHANNELS);
   CreateDefaultConnections ();
-  GetPhy()->SetSimplex(GetChannel(0));
+  GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
+//  Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendDownlinkChannelRequest, this, 0);
 // Will manually control in which channel it will send and receive
 //  Simulator::ScheduleNow (&WranSSLinkManager::StartScanning, m_linkManager, EVENT_NONE, false);
 }
@@ -573,6 +573,100 @@ void
 WranSubscriberStationNetDevice::Stop (void)
 {
   SetState (SS_STATE_STOPPED);
+}
+
+void
+WranSubscriberStationNetDevice::SendDownlinkChannelRequest (int nr_channel) {
+	if(nr_channel >= GetTotalChannels()) {
+		Time delayForSendingResult;
+		delayForSendingResult = Seconds(1);
+		Simulator::Schedule (delayForSendingResult ,&WranSubscriberStationNetDevice::SendSensingResult, this);
+		return;
+	}
+
+	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
+	NS_LOG_INFO("Initiate Downlink Request from SS");
+
+	Ptr<PacketBurst> burst = Create<PacketBurst> ();
+
+	std::stringstream sstream;
+	std::string sentMessage;
+	sstream << SS_FLAG << PACKET_SEPARATOR
+			<< GetMacAddress() << PACKET_SEPARATOR
+			<< MESSAGE_TYPE_SEND_PING << MESSAGE_BODY_SEPARATOR
+			<< nr_channel << PACKET_SEPARATOR
+			<< "Hi from ss" << PACKET_SEPARATOR ;
+	sentMessage = sstream.str();
+	NS_LOG_INFO("sent message from ss: " << sentMessage);
+	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
+	burst->AddPacket (packet);
+
+	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
+
+	Time delayForStartScencing;
+	delayForStartScencing = Seconds(0.0001);
+	bsRxList.clear();
+	Simulator::Schedule (delayForStartScencing,
+					   &WranSubscriberStationNetDevice::ScanningChannel,
+					   this,
+					   nr_channel);
+}
+
+
+void WranSubscriberStationNetDevice::ScanningChannel(int nr_channel){
+	GetPhy ()->SetSimplex (GetChannel(nr_channel)); // lock frequency
+	NS_LOG_INFO("Start Scencing in channel " << GetPhy()->GetRxFrequency());
+
+//	Time scanningDurationTime;
+//	scanningDurationTime = Seconds(MAX_SCANNING_TIME);
+//
+//	Simulator::Schedule (scanningDurationTime,
+//	                                   &WranSubscriberStationNetDevice::EndScanningChannel,
+//	                                   this,
+//	                                   nr_channel);
+}
+
+void
+WranSubscriberStationNetDevice::EndScanningChannel (void)
+{
+	NS_LOG_INFO("SS End Scening");
+	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
+//	Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendDownlinkChannelRequest, this, nr_channel + 1);
+}
+
+void
+WranSubscriberStationNetDevice::SendSensingResult (void) {
+//	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
+//	NS_LOG_INFO("Start Sending Sensing Result from SS");
+//
+//	Ptr<PacketBurst> burst = Create<PacketBurst> ();
+//
+//	std::stringstream sstream;
+//	std::string sentMessage;
+//	sstream << SS_FLAG << PACKET_SEPARATOR
+//			<< GetMacAddress() << PACKET_SEPARATOR
+//			<< MESSAGE_TYPE_SEND_SENSE_RESULT << MESSAGE_BODY_SEPARATOR;
+//
+//	std::map<std::string, double>::iterator mit;
+//	for(int i=0;i<MAX_CHANNELS;i++){
+//		for(mit = bsRxList[i].begin(); mit != bsRxList[i].end(); mit++){
+//			sstream << mit->first << MESSAGE_BODY_SEPARATOR
+//					<< i << MESSAGE_BODY_SEPARATOR
+//					<< mit->second << MESSAGE_BODY_SEPARATOR;
+//		}
+//	}
+//
+//	sentMessage = sstream.str();
+//	NS_LOG_INFO("sent message from ss: " << sentMessage);
+//	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
+//	burst->AddPacket (packet);
+//
+//	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
+//
+////	Simulator::Schedule (delayForStartScencing,
+////					   &WranSubscriberStationNetDevice::ScanningChannel,
+////					   this,
+////					   nr_channel);
 }
 
 void
@@ -742,7 +836,7 @@ WranSubscriberStationNetDevice::SendBurst (uint8_t uiuc,
 void
 WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 {
-	NS_LOG_INFO("~~~~~~~~~Received Packet at SS~~~~~~~~~~");
+	NS_LOG_INFO("~~~~~~~~~Received Packet at SS (" << GetMacAddress() << ")~~~~~~~~~~");
 
 	uint32_t sz =  packet->GetSize();
 	uint8_t bf[sz+1];
@@ -750,24 +844,85 @@ WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 	bf[sz] = 0;
 
 	std::string ms((char *)bf);
-	NS_LOG_INFO("Received packet message: " << ms);
+
 
 	std::istringstream ss(ms);
 	std::string token;
 
-	int i=0, nr_channel = 0;
+	int i = 0;
+	int bsOrSS = 0;
+	int packetType = 0;
+	std::string senderMacAddress;
+	std::string messageBody;
 	while(std::getline(ss, token, PACKET_SEPARATOR)) {
-		if(i==1){
-			nr_channel = std::atoi(token.c_str());
-			break;
+		switch (i) {
+			case 0:
+				bsOrSS = std::atoi(token.c_str());
+				if(bsOrSS == SS_FLAG)return;
+				break;
+			case 1:
+				senderMacAddress = token;
+				break;
+			case 2:
+				packetType = std::atoi(token.c_str());
+				break;
+			case 3:
+				messageBody = token;
+				break;
+			default:
+				break;
 		}
 	    i++;
 	}
 
+	NS_LOG_INFO("Received packet message at SS: " << ms);
+	int nr_channel = (GetPhy()->GetRxFrequency() - 470) / 6;
+	if(nr_channel == COMMON_CONTROL_CHANNEL_NUMBER) {
+		if(Mac48Address(senderMacAddress.c_str()) == GetMyBSMAC()) {
+			if(packetType == PACKET_TYPE_START_SENSING){
+				// sense in nr_channel request from mybs
+				nr_channel = std::atoi(messageBody.c_str());
+				NS_LOG_INFO("Start Sensing in Channel from SS " << GetChannel(nr_channel));
+				GetPhy ()->SetSimplex (GetChannel(nr_channel));
 
-	GetPhy ()->SetSimplex (GetChannel(nr_channel+1));
+				Time freqChangeInterval;
+				freqChangeInterval = Seconds(BEACON_TO_REQUEST_INTERVAL);
+
+				Simulator::Schedule (freqChangeInterval, &WranSubscriberStationNetDevice::EndScanningChannel, this);
+			} else if(packetType == PACKET_TYPE_SEND_SENSING_RESULT){
+
+				if(Mac48Address(messageBody.c_str()) == GetMacAddress()){
+					//its intended for me, send sensing result to BS
+					Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendSensingResult, this);
+				}
+			}
+			return;
+		} else {
+			return;
+		}
+	}
+
+	Ptr<SimpleOfdmWranPhy> wranPhy = DynamicCast<SimpleOfdmWranPhy> (GetPhy());
+	InsertIntoBSRxList(senderMacAddress, wranPhy->GetRxPowerListSubChannel());
+	std::stringstream printstream;
+	printstream << "Updated rx list at SS: " << senderMacAddress;
+	for(uint16_t i = 0; i< wranPhy->GetNumberOfSubChannel();i++){
+		printstream << " " << bsRxList[senderMacAddress][i];
+	}
+	NS_LOG_INFO(printstream.str());
+//	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
 }
 
+void
+WranSubscriberStationNetDevice::InsertIntoBSRxList(std::string macAddress, std::vector<double> v){
+	if(bsRxList.count(macAddress)) {
+		bsRxList[macAddress].clear();
+	} else {
+		std::vector<double> newVector;
+		bsRxList[macAddress] = newVector;
+	}
+	std::copy(v.begin(), v.end(), std::back_inserter(bsRxList[macAddress]));
+}
 //void
 //WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 //{
@@ -1313,6 +1468,14 @@ WranSubscriberStationNetDevice::SetTimer (EventId eventId, EventId &event)
     }
 
   event = eventId;
+}
+
+void WranSubscriberStationNetDevice::SetMyBSMAC(Mac48Address BSMAC){
+	myBSMAC = BSMAC;
+}
+
+Mac48Address WranSubscriberStationNetDevice::GetMyBSMAC(){
+	return myBSMAC;
 }
 
 } // namespace ns`

@@ -60,13 +60,13 @@ SpectrumSensing::GetSenseResultsFuture(int id, Time sense_time, Time transmit_ti
 
 	if (m_puModel) {
 
-		Ptr<UniformRandomVariable> uv = CreateObject<UniformRandomVariable>();
-		double randomValue = uv->GetValue(); //by default, min 0 and max 1
+//		Ptr<UniformRandomVariable> uv = CreateObject<UniformRandomVariable>();
+//		double randomValue = uv->GetValue(); //by default, min 0 and max 1
 		// Ask the PUmodel if a PU is active  in the time interval [current_time:current_time + sense_time]
 		cr_on=m_puModel->IsPuActive(Simulator::Now(),sense_time,x,y, channel);
 		// Apply the probability of false negative detection
-		if ((randomValue < m_probMisdetect) and cr_on)
-			cr_on=false;
+//		if ((randomValue < m_probMisdetect) and cr_on)
+//			cr_on=false;
 
 	}
 //#ifdef SENSING_VERBOSE_MODE

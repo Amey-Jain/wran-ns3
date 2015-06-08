@@ -80,7 +80,7 @@ public:
    *
    * Spectrum Manager initializer
    */
-	SpectrumManager(Ptr<WranNetDevice> wranNetDevice, int id);
+	SpectrumManager(/*Ptr<WranNetDevice> wranNetDevice,*/ int id);
 	/**
 	 * \param mac the mac of the RX interface. This will be used for the cognitive cycle
 	 * \param phy the PHY of the RX interface. This will be used for the cognitive cycle
@@ -109,7 +109,7 @@ public:
 	/**
 	 * \returns true if PU is active while receiving the packet, on the current listening channel.
 	 */
-	bool IsPuInterfering(Time txDuration);
+	bool IsPuInterfering(Time txDuration, int current_channel);
 
 	/**
 	 * Callback for when sensing is finished by the PHY layer

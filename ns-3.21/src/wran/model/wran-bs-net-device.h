@@ -31,6 +31,12 @@
 #include "wran-bs-service-flow-manager.h"
 #include "ns3/dl-mac-messages.h"
 #include "ns3/wran-ipcs-classifier.h"
+#include "common-cognitive-header.h"
+#include "spectrum-manager.h"
+#include "simple-ofdm-wran-phy.h"
+#include <map>
+#include <set>
+#include <string>
 
 namespace ns3 {
 
@@ -226,10 +232,27 @@ public:
 
   Ptr<WranBsWranServiceFlowManager> GetWranServiceFlowManager (void) const;
   void SetWranServiceFlowManager (Ptr<WranBsWranServiceFlowManager> );
+
 private:
-  void SendCustomMessage (void);
+  void SendCustomMessage (int nr_channel);
   void EndSendCustomMessage (void);
   void ScheduleNextBroadcast(int nr_channel);
+
+  void HandleControlMessage (std::string msgBody, std::string senderMacAddress);
+  void PrintAllValue(void);
+
+  void GetSensingResultFromSS (void);
+  void SendSensingResultRequest (std::set<std::string>::iterator sit);
+  void EndGetSensingResultFromSS (void);
+
+  void AttachSpectrumManager (void);
+  void GetPUSensingStatus (void);
+
+  void SwitchToChannel(int nr_channel);
+  void StartIterativeAlgorithm(int iteration);
+  void CalculateUtility(void);
+  double CalculateThroughput(double sinr);
+  double CalculateMAXThroughput(double rxPower, double ipn, int nr_channel);
 
   void DoDispose (void);
   void StartFrame (void);
@@ -241,6 +264,9 @@ private:
 
   bool DoSend (Ptr<Packet> packet, const Mac48Address& source, const Mac48Address& dest, uint16_t protocolNumber);
   void DoReceive (Ptr<Packet> packet);
+
+  void SetSimpleOfdmWranPhy(Ptr<SimpleOfdmWranPhy> phy);
+  Ptr<SimpleOfdmWranPhy> GetSimpleOfdmWranPhy(void) const;
   /**
    * \brief creates the MAC management messages DL-MAP and UL-MAP
    */
@@ -363,7 +389,15 @@ private:
    *
    * \see class CallBackTraceSource
    */
+  Ptr<SimpleOfdmWranPhy> m_simpleOfdmWranPhy;
   TracedCallback<Ptr<const Packet> > m_bsRxDropTrace;
+  std::map<std::string, double> interferencePlusNoise[MAX_CHANNELS]; // in W
+  std::map<std::string, double> capturedSignal[MAX_CHANNELS]; // in dbm
+  std::map<std::string, double> SINR[MAX_CHANNELS];
+  std::set<std::string> pendingSenseResultList;
+  std::set<std::string>::iterator pendingSenseResultListIterator;
+  Ptr<SpectrumManager> spectrumManager;
+  double assignedTxPower[MAX_CHANNELS];
 };
 
 } // namespace ns3

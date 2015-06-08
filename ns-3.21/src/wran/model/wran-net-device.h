@@ -22,6 +22,25 @@
 #ifndef WRAN_NET_DEVICE_H
 #define WRAN_NET_DEVICE_H
 
+#define BS_FLAG 0
+#define SS_FLAG 1
+#define COMMON_CONTROL_CHANNEL_NUMBER GetTotalChannels()
+
+// all values are in seconds
+#define REQUEST_TO_BEACON_INTERVAL 0.01 // 10ms
+#define BEACON_TO_REQUEST_INTERVAL 0.1 // 100 ms
+#define REQUEST_TO_SENSE_RESULT_INTERVAL 0.01 // 10ms
+#define GET_SENSING_RESULT_RETRY_INTERVAL 0.5 // 500 ms
+#define MAX_SCANNING_TIME 0.5 // in seconds
+
+#define PACKET_SEPARATOR '|'
+#define PACKET_TYPE_START_SENSING 0
+#define PACKET_TYPE_SEND_SENSING_RESULT 1
+
+#define MESSAGE_BODY_SEPARATOR '#'
+#define MESSAGE_TYPE_SEND_PING 0
+#define MESSAGE_TYPE_SEND_SENSE_RESULT 1
+
 #include "ns3/net-device.h"
 #include "ns3/event-id.h"
 #include "ns3/mac48-address.h"

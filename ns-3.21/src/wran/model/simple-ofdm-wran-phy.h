@@ -131,6 +131,39 @@ public:
    */
   void SetTxPower (double txPower);
   /**
+     * \return the transmission power of subchannel.
+     */
+    double GetTxPowerSubChannel (uint16_t nrSubChannel) const;
+    /**
+	 * \return the transmission power list of subchannels.
+	 */
+    std::vector<double> GetTxPowerListSubChannel () const;
+    /**
+     * \brief set the transmission power
+     * \param txPower the transmission power
+     */
+    void SetTxPowerSubChannel (uint16_t nrSubChannel, double txPower);
+
+  /**
+     * \return the received power
+     */
+    double GetRxPower (void) const;
+
+    /**
+	 * \brief set the received power.
+	 * \param nrSubChannel sub channel index
+	 * \param rxPower the received power
+	 */
+    void SetRxPowerSubChannel (uint16_t nrSubChannel, double rxPower);
+    /**
+	 * \return the received power list of subchannels.
+	 */
+    std::vector<double> GetRxPowerListSubChannel () const;
+  /**
+	 * \return the received power of subchannel.
+	 */
+	double GetRxPowerSubChannel (uint16_t nrSubChannel) const;
+  /**
    * \return the noise figure
    */
   double GetNoiseFigure (void) const;
@@ -185,6 +218,16 @@ public:
   * \return the number of stream indices assigned by this model
   */
   int64_t AssignStreams (int64_t stream);
+
+  /**
+	* \brief set the transmission power
+	* \param txPower the transmission power
+	*/
+  void SetNumberOfSubChannel (uint16_t nrOfSubChannel);
+  /**
+	* \return the received power
+	*/
+  uint16_t GetNumberOfSubChannel (void) const;
 
 //  virtual void SetSenseEndedCallback(WranPhy::SnsEndedCallback callback);
 //  virtual void SetHandoffEndedCallback(WranPhy::HandoffEndedCallback callback);
@@ -263,6 +306,8 @@ private:
   double DoGetGValue (void) const;
   void DoSetGValue (double);
 
+  void SetRxPower (double rxPower);
+
   double GetRxGain (void) const;
   void SetRxGain (double rxgain);
 
@@ -299,9 +344,12 @@ private:
   double m_g;
   double m_bandWidth;
   double m_txPower;
+  double m_rxPower;
   double m_noiseFigure;
   double m_txGain;
   double m_rxGain;
+  std::vector<double> m_txPowerSubChannel;
+  std::vector<double> m_rxPowerSubChannel;
   /**
    * The trace source fired when a packet begins the transmission process on
    * the medium.
@@ -354,6 +402,10 @@ private:
   /// Provides uniform random variables.
   Ptr<UniformRandomVariable> m_URNG;
 
+  /**
+   * Total number of subchannel.
+   */
+  uint16_t m_numberOfSubchannel;
 //  //sensing ended callback
 //  SnsEndedCallback m_senseEndedCallback;
 //  //handoff ended callback
