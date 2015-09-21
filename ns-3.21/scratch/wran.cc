@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 120, schedType = 0, mxSS = 1, mxBS = 1;
+  int duration = 120, schedType = 0, mxSS = 2, mxBS = 1;
   WranHelper::SchedulerType scheduler = WranHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -78,7 +78,7 @@ int main (int argc, char *argv[])
 //  LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
 //  LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
   LogComponentEnable("WranSimpleExample", LOG_LEVEL_INFO);
-//  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
+  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
 //  LogComponentEnable("SimpleOfdmWranPhy", LOG_LEVEL_INFO);
 //  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
   LogComponentEnable("WranBaseStationNetDevice", LOG_LEVEL_INFO);
@@ -188,9 +188,9 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> positionAllocBS = CreateObject<ListPositionAllocator> ();
         positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate, 							10.0));
         positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate, 							10.0));
-        positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
-        positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
-        positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
+//        positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
+//        positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
+//        positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
         bsMobility.SetPositionAllocator (positionAllocBS);
@@ -198,16 +198,16 @@ int main (int argc, char *argv[])
       bsMobility.Install (bsNodes);
 
       std::stringstream sstreamX, sstreamY;
-//      sstreamX << (startCoordinate + (bsToBsDistanceX / 2.0));
-//      sstreamY << (startCoordinate + (2.0 / 3.0 * bsToBsDistanceY));
-//  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
-//                                   "X", StringValue (sstreamX.str()), // center-x
-//                                   "Y", StringValue (sstreamY.str()), // center-y
-//                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=40000]")); // position radius
+////      sstreamX << (startCoordinate + (bsToBsDistanceX / 2.0));
+////      sstreamY << (startCoordinate + (2.0 / 3.0 * bsToBsDistanceY));
+////  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
+////                                   "X", StringValue (sstreamX.str()), // center-x
+////                                   "Y", StringValue (sstreamY.str()), // center-y
+////                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=40000]")); // position radius
 
       std::string unRanVar("ns3::UniformRandomVariable[Min=");
-      double maxAreaX = startCoordinate + (2.0 * bsToBsDistanceX);
-      double maxAreaY = (/*2.0 */ startCoordinate) + bsToBsDistanceY;
+      double maxAreaX = startCoordinate + ( 2.0 * bsToBsDistanceX);
+      double maxAreaY = (/*2.0 */ startCoordinate) + bsToBsDistanceY / 2.0;
       sstreamX  << unRanVar << startCoordinate << "|Max=" << maxAreaX << "]";
       sstreamY  << unRanVar << startCoordinate << "|Max=" << maxAreaY << "]";
       mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
@@ -217,7 +217,7 @@ int main (int argc, char *argv[])
 //                                     "X", StringValue ("ns3::UniformRandomVariable[Min=0|Max=5500]"),
 //                                     "Y", StringValue ("ns3::UniformRandomVariable[Min=0|Max=100]"));
 //  Ptr<ListPositionAllocator> positionAllocSS = CreateObject<ListPositionAllocator> ();
-//  positionAllocSS->Add (Vector (startCoordinate + bsToBsDistanceX, startCoordinate, 10.0));
+//  positionAllocSS->Add (Vector (startCoordinate + bsToBsDistanceX / 2.0 + 1000, startCoordinate, 10.0));
 //  mobility.SetPositionAllocator (positionAllocSS);
 
 //      mobility.SetPositionAllocator ("ns3::GridPositionAllocator",

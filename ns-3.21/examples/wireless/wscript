@@ -28,7 +28,7 @@ def build(bld):
     obj = bld.create_ns3_program('multirate', ['internet', 'mobility', 'wifi', 'stats', 'flow-monitor', 'olsr', 'applications', 'point-to-point'])
     obj.source = 'multirate.cc'
 
-    obj = bld.create_ns3_program('wifi-simple-adhoc', ['internet', 'mobility', 'wifi', 'config-store', 'stats'])
+    obj = bld.create_ns3_program('wifi-simple-adhoc', ['internet', 'mobility', 'wifi', 'config-store', 'stats', 'netanim'])
     obj.source = 'wifi-simple-adhoc.cc'
 
     obj = bld.create_ns3_program('wifi-simple-adhoc-grid', ['internet', 'mobility', 'wifi', 'olsr', 'config-store', 'stats', 'point-to-point'])

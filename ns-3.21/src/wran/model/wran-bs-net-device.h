@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2015, 2009 Green Network Research Group
+ * Copyright (c) 2015 Green Network Research Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -33,6 +33,7 @@
 #include "ns3/wran-ipcs-classifier.h"
 #include "common-cognitive-header.h"
 #include "spectrum-manager.h"
+#include "maximum-matching.h"
 #include "simple-ofdm-wran-phy.h"
 #include <map>
 #include <set>
@@ -253,6 +254,12 @@ private:
   void CalculateUtility(void);
   double CalculateThroughput(double sinr);
   double CalculateMAXThroughput(double rxPower, double ipn, int nr_channel);
+  void UpdateMap(std::map<std::string,
+  		  	  	  std::vector<double> > *mp,
+  		  	  	  std::string macAddress,
+  		  	  	  uint16_t subChannelIndex,
+  		  	  	  double value,
+  		  	  	  bool isAdd);
 
   void DoDispose (void);
   void StartFrame (void);
@@ -389,15 +396,16 @@ private:
    *
    * \see class CallBackTraceSource
    */
-  Ptr<SimpleOfdmWranPhy> m_simpleOfdmWranPhy;
   TracedCallback<Ptr<const Packet> > m_bsRxDropTrace;
-  std::map<std::string, double> interferencePlusNoise[MAX_CHANNELS]; // in W
-  std::map<std::string, double> capturedSignal[MAX_CHANNELS]; // in dbm
-  std::map<std::string, double> SINR[MAX_CHANNELS];
+
+  Ptr<SimpleOfdmWranPhy> m_simpleOfdmWranPhy;
+  std::map<std::string, std::vector<double> > interferencePlusNoise; // in W
+  std::map<std::string, std::vector<double> > capturedSignal; // in dbm
+  std::map<std::string, std::vector<double> > SINR;
   std::set<std::string> pendingSenseResultList;
   std::set<std::string>::iterator pendingSenseResultListIterator;
   Ptr<SpectrumManager> spectrumManager;
-  double assignedTxPower[MAX_CHANNELS];
+  Ptr<MaximumMatching> m_matching;
 };
 
 } // namespace ns3

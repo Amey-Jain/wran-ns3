@@ -636,37 +636,38 @@ WranSubscriberStationNetDevice::EndScanningChannel (void)
 
 void
 WranSubscriberStationNetDevice::SendSensingResult (void) {
-//	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
-//	NS_LOG_INFO("Start Sending Sensing Result from SS");
-//
-//	Ptr<PacketBurst> burst = Create<PacketBurst> ();
-//
-//	std::stringstream sstream;
-//	std::string sentMessage;
-//	sstream << SS_FLAG << PACKET_SEPARATOR
-//			<< GetMacAddress() << PACKET_SEPARATOR
-//			<< MESSAGE_TYPE_SEND_SENSE_RESULT << MESSAGE_BODY_SEPARATOR;
-//
-//	std::map<std::string, double>::iterator mit;
-//	for(int i=0;i<MAX_CHANNELS;i++){
-//		for(mit = bsRxList[i].begin(); mit != bsRxList[i].end(); mit++){
-//			sstream << mit->first << MESSAGE_BODY_SEPARATOR
-//					<< i << MESSAGE_BODY_SEPARATOR
-//					<< mit->second << MESSAGE_BODY_SEPARATOR;
-//		}
-//	}
-//
-//	sentMessage = sstream.str();
-//	NS_LOG_INFO("sent message from ss: " << sentMessage);
-//	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
-//	burst->AddPacket (packet);
-//
-//	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
-//
-////	Simulator::Schedule (delayForStartScencing,
-////					   &WranSubscriberStationNetDevice::ScanningChannel,
-////					   this,
-////					   nr_channel);
+	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
+	NS_LOG_INFO("Start Sending Sensing Result from SS");
+
+	Ptr<PacketBurst> burst = Create<PacketBurst> ();
+
+	std::stringstream sstream;
+	std::string sentMessage;
+	sstream << SS_FLAG << PACKET_SEPARATOR
+			<< GetMacAddress() << PACKET_SEPARATOR
+			<< MESSAGE_TYPE_SEND_SENSE_RESULT << MESSAGE_BODY_SEPARATOR;
+
+	std::map<std::string, std::vector<double> >::iterator mit;
+	std::vector<double>::iterator vit;
+	for(mit = bsRxList.begin(); mit != bsRxList.end(); mit++){
+		for(vit = mit->second.begin(); vit != mit->second.end(); vit++){
+			sstream << mit->first << MESSAGE_BODY_SEPARATOR
+					<< vit - mit->second.begin() << MESSAGE_BODY_SEPARATOR
+					<< (*vit) << MESSAGE_BODY_SEPARATOR;
+		}
+	}
+
+	sentMessage = sstream.str();
+	NS_LOG_INFO("sent message from ss: " << sentMessage);
+	Ptr<Packet> packet =  Create<Packet> ((uint8_t*) sentMessage.c_str(), sentMessage.length());
+	burst->AddPacket (packet);
+
+	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
+
+//	Simulator::Schedule (delayForStartScencing,
+//					   &WranSubscriberStationNetDevice::ScanningChannel,
+//					   this,
+//					   nr_channel);
 }
 
 void

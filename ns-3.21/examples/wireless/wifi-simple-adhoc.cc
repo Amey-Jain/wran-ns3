@@ -57,6 +57,7 @@
 #include "ns3/config-store-module.h"
 #include "ns3/wifi-module.h"
 #include "ns3/internet-module.h"
+#include "ns3/netanim-module.h"
 
 #include <iostream>
 #include <fstream>
@@ -189,6 +190,8 @@ int main (int argc, char *argv[])
 
   // Output what we are doing
   NS_LOG_UNCOND ("Testing " << numPackets  << " packets sent with receiver rss " << rss );
+
+  AnimationInterface anim ("wifi-adhoc.xml"); // Mandatory
 
   Simulator::ScheduleWithContext (source->GetNode ()->GetId (),
                                   Seconds (1.0), &GenerateTraffic, 

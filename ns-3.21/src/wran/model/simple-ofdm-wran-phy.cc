@@ -32,6 +32,7 @@
 #include "wran-mac-header.h"
 #include "simple-ofdm-wran-channel.h"
 #include "ns3/trace-source-accessor.h"
+#include "common-cognitive-header.h"
 #include <string>
 #include <cmath>
 
@@ -147,7 +148,7 @@ SimpleOfdmWranPhy::InitSimpleOfdmWranPhy (void)
   m_noiseFigure = 5; // dB
   m_txPower = 30; // dBm
   SetBandwidth (6000000); // 6Mhz
-  SetNumberOfSubChannel(60);
+  SetNumberOfSubChannel(TOTAL_SUBCHANNEL);
   m_nbErroneousBlock = 0;
   m_nrRecivedFecBlocks = 0;
   m_snrToBlockErrorRateManager = new SNRToBlockErrorRateManager ();
@@ -1194,6 +1195,26 @@ std::vector<double>
 SimpleOfdmWranPhy::GetRxPowerListSubChannel () const
 {
 	return m_rxPowerSubChannel;
+}
+
+double
+SimpleOfdmWranPhy::GetSubChannelBandwidth () const
+{
+	return ((double)GetBandwidth()/(double)GetNumberOfSubChannel());
+}
+
+double
+SimpleOfdmWranPhy::CalculateNoiseW () const
+{
+	/* see page 119 sec 4.17.4 in book Wireless Communication and Networking by Vijay Greg
+	 * N = kTB
+	 * k = Boltzmann’s constant (1.3803 * 10^-23 J/K)
+	 * T = absolute temperature (K), At room temperature T = 290 K
+	 * B = channel bandwidth
+	 */
+	const double k = 1.3803e-23;
+	const double T = 290;
+	return (k * T * GetSubChannelBandwidth());
 }
 /* ------------------------- Cognitive Functions --------------------- */
 //bool

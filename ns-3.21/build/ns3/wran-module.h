@@ -9,6 +9,7 @@
 // Module headers:
 #include "cognitive-packet-tags.h"
 #include "common-cognitive-header.h"
+#include "maximum-matching.h"
 #include "pu-model.h"
 #include "repository.h"
 #include "simple-ofdm-wran-channel.h"

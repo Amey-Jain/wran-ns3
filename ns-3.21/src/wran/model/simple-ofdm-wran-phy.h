@@ -228,6 +228,20 @@ public:
 	* \return the received power
 	*/
   uint16_t GetNumberOfSubChannel (void) const;
+  /**
+   *
+   * @return the sub channel bandwidth
+   */
+  double GetSubChannelBandwidth () const;
+
+  /** see page 119 sec 4.17.4 in book Wireless Communication and Networking by Vijay Greg
+  	 * N = kTB
+  	 * k = Boltzmann’s constant (1.3803 * 10^-23 J/K)
+  	 * T = absolute temperature (K), At room temperature T = 290 K
+  	 * B = channel bandwidth
+  	 * @return calculated thermal noise in watt
+  	 */
+  double CalculateNoiseW () const;
 
 //  virtual void SetSenseEndedCallback(WranPhy::SnsEndedCallback callback);
 //  virtual void SetHandoffEndedCallback(WranPhy::HandoffEndedCallback callback);

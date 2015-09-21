@@ -1,18 +1,25 @@
 <anim ver="netanim-3.105" >
-<node id="0" sysId="0" locX="63636.88365" locY="22805.4125" >
-<node id="1" sysId="0" locX="35000" locY="15000" >
+<node id="0" sysId="0" locX="80762.30813" locY="23428.48792" >
+<node id="1" sysId="0" locX="32529.01758" locY="18566.10434" >
+<node id="2" sysId="0" locX="35000" locY="15000" >
 <nu p="c" t="0" id="0" r="255" g="0" b="0" >
 <nu p="c" t="0" id="1" r="255" g="0" b="0" >
+<nu p="c" t="0" id="2" r="255" g="0" b="0" >
 <nonp2plinkproperties id="0" ipv4Address="10.1.1.1~00:00:00:00:00:01" channelType="ns3::WranChannel" >
 <nonp2plinkproperties id="1" ipv4Address="10.1.1.2~00:00:00:00:00:02" channelType="ns3::WranChannel" >
+<nonp2plinkproperties id="2" ipv4Address="10.1.1.3~00:00:00:00:00:03" channelType="ns3::WranChannel" >
 <nu p="s" t="0" id="0" w="1" h="1" >
 <nu p="s" t="0" id="1" w="1" h="1" >
+<nu p="s" t="0" id="2" w="1" h="1" >
 <ncs ncId="0" n="RemainingEnergy" t="DOUBLE" >
 <res rid="0" p="/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/ss.png" >
 <res rid="1" p="/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/bs.png" >
 <nu p="i" t="0" id="0" rid="0" >
 <nu p="d" t="0" id="0" descr="CPE" >
-<nu p="i" t="0" id="1" rid="1" >
-<nu p="d" t="0" id="1" descr="BS" >
-<nu p="d" t="0" id="0" descr="CPE0" >
+<nu p="i" t="0" id="1" rid="0" >
+<nu p="d" t="0" id="1" descr="CPE" >
+<nu p="i" t="0" id="2" rid="1" >
+<nu p="d" t="0" id="2" descr="BS" >
+<nu p="d" t="0" id="0" descr="CPE-1" >
+<nu p="d" t="0" id="1" descr="CPE0" >
 </anim>

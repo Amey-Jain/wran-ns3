@@ -1,0 +1,13 @@
+<anim ver="netanim-3.105" >
+<node id="0" sysId="0" locX="0" locY="0" >
+<node id="1" sysId="0" locX="5" locY="0" >
+<nu p="c" t="0" id="0" r="255" g="0" b="0" >
+<nu p="c" t="0" id="1" r="255" g="0" b="0" >
+<nonp2plinkproperties id="0" ipv4Address="10.1.1.1~00:00:00:00:00:01" channelType="ns3::YansWifiChannel" >
+<nonp2plinkproperties id="1" ipv4Address="10.1.1.2~00:00:00:00:00:02" channelType="ns3::YansWifiChannel" >
+<nu p="s" t="0" id="0" w="1" h="1" >
+<nu p="s" t="0" id="1" w="1" h="1" >
+<ncs ncId="0" n="RemainingEnergy" t="DOUBLE" >
+<pr uId="1" fId="1" fbTx="1" lbTx="1" >
+<wpr uId="1" tId="0" fbRx="1.000000016" lbRx="1.000000016" >
+</anim>

@@ -48,6 +48,7 @@ def build(bld):
         	'model/spectrum-decision.cc',
         	'model/spectrum-sensing.cc',
         	'model/cognitive-packet-tags.cc',
+        	'model/maximum-matching.cc',
             'helper/wran-helper.cc',
 		            ]
 
@@ -102,6 +103,7 @@ def build(bld):
         	'model/spectrum-sensing.h',
         	'model/common-cognitive-header.h',
         	'model/cognitive-packet-tags.h',
+        	'model/maximum-matching.h',
             'helper/wran-helper.h',
 		            ]
 
