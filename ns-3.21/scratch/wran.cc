@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 120, schedType = 0, mxSS = 2, mxBS = 1;
+  int duration = 120, schedType = 0, mxSS = 5, mxBS = 2;
   WranHelper::SchedulerType scheduler = WranHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -78,7 +78,7 @@ int main (int argc, char *argv[])
 //  LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
 //  LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
   LogComponentEnable("WranSimpleExample", LOG_LEVEL_INFO);
-  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
+//  LogComponentEnable("simpleOfdmWranChannel", LOG_LEVEL_INFO);
 //  LogComponentEnable("SimpleOfdmWranPhy", LOG_LEVEL_INFO);
 //  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
   LogComponentEnable("WranBaseStationNetDevice", LOG_LEVEL_INFO);

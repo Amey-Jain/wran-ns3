@@ -218,7 +218,7 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
                               WranPhy::ModulationType modulationType,
                               uint8_t direction,
                               uint16_t nrOfSubChannel,
-                              std::vector<double> *txPowerListDbm,
+                              std::vector<double> *txPowerListW,
                               Ptr<PacketBurst> burst)
 {
 	  double rxPowerDbm = 0;
@@ -241,14 +241,19 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
 
 				  for(uint16_t subChannel = 0; subChannel < nrOfSubChannel; subChannel++)
 				  {
-					NS_LOG_INFO("From ofdm Channel, txPower " << txPowerListDbm->at(subChannel));
-					Ptr<FriisPropagationLossModel> frii_loss = DynamicCast<FriisPropagationLossModel> (m_loss);
-					double centralFrequency = ((double)frequency * 1000000.0) + ((phy->GetChannelBandwidth() / (double)nrOfSubChannel) * (double)subChannel);
-					frii_loss->SetFrequency(centralFrequency);
-					NS_LOG_INFO("From ofdm Channel in Watt " << frii_loss->DbmToW(txPowerListDbm->at(subChannel)) << " Freq " << frii_loss->GetFrequency());
+//					NS_LOG_INFO("From ofdm Channel, txPower " << txPowerListW->at(subChannel));
 
-					rxPowerDbm = m_loss->CalcRxPower (txPowerListDbm->at(subChannel), senderMobility, receiverMobility);
-					(*iter)->SetRxPowerSubChannel(subChannel, rxPowerDbm);
+					if(txPowerListW->at(subChannel)) {
+						Ptr<FriisPropagationLossModel> frii_loss = DynamicCast<FriisPropagationLossModel> (m_loss);
+						double centralFrequency = ((double)frequency * 1000000.0) + ((phy->GetChannelBandwidth() / (double)nrOfSubChannel) * (double)subChannel);
+						frii_loss->SetFrequency(centralFrequency);
+						NS_LOG_INFO("From ofdm Channel in Watt " << txPowerListW->at(subChannel) << " Freq " << frii_loss->GetFrequency());
+
+						rxPowerDbm = m_loss->CalcRxPower (frii_loss->DbmFromW(txPowerListW->at(subChannel)), senderMobility, receiverMobility);
+						(*iter)->SetRxPowerSubChannel(subChannel, frii_loss->DbmToW(rxPowerDbm));
+					} else {
+						(*iter)->SetRxPowerSubChannel(subChannel, 0.0);
+					}
 				  }
 	//              if(distance > MAX_TRANSMISSION_RANGE)continue;
 				}

@@ -35,9 +35,11 @@
 #define MAX_RADIO	3
 #define	MAX_CHANNELS 	1 //#modify to accomodate changes (he says dont modify, why ?)
 
-#define TOTAL_SUBCHANNEL 1
-#define MAX_ITERATION 10
-#define P_MAX 40 // in dbm, 10W
+#define TOTAL_SUBCHANNEL 10
+#define MAX_ITERATION 2
+
+#define P_MAX 10 //in W, 40 dbm
+#define NO_POWER 0 // in W, inf dbm
 
 #define MAX_TRANSMISSION_RANGE 30000 // 30km
 #define GAUSSIAN_NOISE std::pow(10.0,(-144 / 10)) // (-114 + m_noiseFigure + 10 * std::log (GetBandwidth () / 1000000000.0) / 2.303) //in dbm

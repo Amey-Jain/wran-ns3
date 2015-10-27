@@ -86,7 +86,7 @@ public:
 			WranPhy::ModulationType modulationType,
 			uint8_t direction,
 			uint16_t nrOfSubChannel,
-			std::vector<double> *txPowerListDbm,
+			std::vector<double> *txPowerListW,
 			Ptr<PacketBurst> burst);
   /**
    * \brief sets the propagation model

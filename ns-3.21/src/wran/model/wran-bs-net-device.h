@@ -33,11 +33,12 @@
 #include "ns3/wran-ipcs-classifier.h"
 #include "common-cognitive-header.h"
 #include "spectrum-manager.h"
-#include "maximum-matching.h"
 #include "simple-ofdm-wran-phy.h"
 #include <map>
 #include <set>
 #include <string>
+#include <algorithm>
+#include <utility>
 
 namespace ns3 {
 
@@ -260,6 +261,9 @@ private:
   		  	  	  uint16_t subChannelIndex,
   		  	  	  double value,
   		  	  	  bool isAdd);
+  void UpdateRelativeTh(int nr_channel, std::string macAddress, double value);
+  void MakeAssignChannelList();
+  void AssignPowerToChannels();
 
   void DoDispose (void);
   void StartFrame (void);
@@ -343,6 +347,7 @@ private:
   CidFactory *m_cidFactory;
 
   uint32_t m_allocationStartTime;
+  uint32_t iterationCount;
 
   Ptr<WranSSManager> m_ssManager;
   Ptr<WranUplinkScheduler> m_uplinkScheduler;
@@ -400,12 +405,14 @@ private:
 
   Ptr<SimpleOfdmWranPhy> m_simpleOfdmWranPhy;
   std::map<std::string, std::vector<double> > interferencePlusNoise; // in W
-  std::map<std::string, std::vector<double> > capturedSignal; // in dbm
-  std::map<std::string, std::vector<double> > SINR;
+  std::map<std::string, std::vector<double> > capturedSignal; // in W
+  std::map<std::string, std::vector<double> > SINR; // in W
   std::set<std::string> pendingSenseResultList;
   std::set<std::string>::iterator pendingSenseResultListIterator;
+  std::vector<std::map<std::string, double> >relThList;
+  std::map< std::string, int > assignedChannelList;
+  std::vector< std::string > assignedSessionList;
   Ptr<SpectrumManager> spectrumManager;
-  Ptr<MaximumMatching> m_matching;
 };
 
 } // namespace ns3
