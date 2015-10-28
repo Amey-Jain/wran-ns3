@@ -563,7 +563,7 @@ WranSubscriberStationNetDevice::Start (void)
 
   SetTotalChannels(MAX_CHANNELS);
   CreateDefaultConnections ();
-  GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
+  GetPhy ()->SetSimplex (GetChannel(DEFAULT_CHANNEL));
 //  Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendDownlinkChannelRequest, this, 0);
 // Will manually control in which channel it will send and receive
 //  Simulator::ScheduleNow (&WranSSLinkManager::StartScanning, m_linkManager, EVENT_NONE, false);
@@ -636,7 +636,6 @@ WranSubscriberStationNetDevice::EndScanningChannel (void)
 
 void
 WranSubscriberStationNetDevice::SendSensingResult (void) {
-	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
 	NS_LOG_INFO("Start Sending Sensing Result from SS");
 
 	Ptr<PacketBurst> burst = Create<PacketBurst> ();
@@ -663,11 +662,6 @@ WranSubscriberStationNetDevice::SendSensingResult (void) {
 	burst->AddPacket (packet);
 
 	ForwardDown(burst, WranPhy::MODULATION_TYPE_QAM16_12);
-
-//	Simulator::Schedule (delayForStartScencing,
-//					   &WranSubscriberStationNetDevice::ScanningChannel,
-//					   this,
-//					   nr_channel);
 }
 
 void
@@ -876,33 +870,6 @@ WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 	    i++;
 	}
 
-	NS_LOG_INFO("Received packet message at SS: " << ms);
-	int nr_channel = (GetPhy()->GetRxFrequency() - 470) / 6;
-	if(nr_channel == COMMON_CONTROL_CHANNEL_NUMBER) {
-		if(Mac48Address(senderMacAddress.c_str()) == GetMyBSMAC()) {
-			if(packetType == PACKET_TYPE_START_SENSING){
-				// sense in nr_channel request from mybs
-				nr_channel = std::atoi(messageBody.c_str());
-				NS_LOG_INFO("Start Sensing in Channel from SS " << GetChannel(nr_channel));
-				GetPhy ()->SetSimplex (GetChannel(nr_channel));
-
-				Time freqChangeInterval;
-				freqChangeInterval = Seconds(BEACON_TO_REQUEST_INTERVAL);
-
-				Simulator::Schedule (freqChangeInterval, &WranSubscriberStationNetDevice::EndScanningChannel, this);
-			} else if(packetType == PACKET_TYPE_SEND_SENSING_RESULT){
-
-				if(Mac48Address(messageBody.c_str()) == GetMacAddress()){
-					//its intended for me, send sensing result to BS
-					Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendSensingResult, this);
-				}
-			}
-			return;
-		} else {
-			return;
-		}
-	}
-
 	Ptr<SimpleOfdmWranPhy> wranPhy = DynamicCast<SimpleOfdmWranPhy> (GetPhy());
 	InsertIntoBSRxList(senderMacAddress, wranPhy->GetRxPowerListSubChannel());
 	std::stringstream printstream;
@@ -911,6 +878,46 @@ WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 		printstream << " " << bsRxList[senderMacAddress][i];
 	}
 	NS_LOG_INFO(printstream.str());
+
+
+	NS_LOG_INFO("Received packet message at SS: " << ms);
+	if(Mac48Address(senderMacAddress.c_str()) == GetMyBSMAC()) {
+		if(packetType == PACKET_TYPE_SEND_SENSING_RESULT){
+			if(Mac48Address(messageBody.c_str()) == GetMacAddress()){
+				//its intended for me, send sensing result to BS
+				Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendSensingResult, this);
+			}
+			return;
+		}
+	}
+
+//	NS_LOG_INFO("Received packet message at SS: " << ms);
+//	int nr_channel = (GetPhy()->GetRxFrequency() - 470) / 6;
+//	if(nr_channel == COMMON_CONTROL_CHANNEL_NUMBER) {
+//		if(Mac48Address(senderMacAddress.c_str()) == GetMyBSMAC()) {
+//			if(packetType == PACKET_TYPE_START_SENSING){
+//				// sense in nr_channel request from mybs
+//				nr_channel = std::atoi(messageBody.c_str());
+//				NS_LOG_INFO("Start Sensing in Channel from SS " << GetChannel(nr_channel));
+//				GetPhy ()->SetSimplex (GetChannel(nr_channel));
+//
+//				Time freqChangeInterval;
+//				freqChangeInterval = Seconds(BEACON_TO_REQUEST_INTERVAL);
+//
+//				Simulator::Schedule (freqChangeInterval, &WranSubscriberStationNetDevice::EndScanningChannel, this);
+//			} else if(packetType == PACKET_TYPE_SEND_SENSING_RESULT){
+//
+//				if(Mac48Address(messageBody.c_str()) == GetMacAddress()){
+//					//its intended for me, send sensing result to BS
+//					Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendSensingResult, this);
+//				}
+//			}
+//			return;
+//		} else {
+//			return;
+//		}
+//	}
+// saving to bsRxList was here before.
 //	GetPhy ()->SetSimplex (GetChannel(COMMON_CONTROL_CHANNEL_NUMBER));
 }
 

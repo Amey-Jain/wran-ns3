@@ -236,6 +236,8 @@ public:
   void SetWranServiceFlowManager (Ptr<WranBsWranServiceFlowManager> );
 
 private:
+  void ClearAllInformation (bool isClearFirstData);
+
   void SendCustomMessage (int nr_channel);
   void EndSendCustomMessage (void);
   void ScheduleNextBroadcast(int nr_channel);
@@ -406,6 +408,7 @@ private:
   Ptr<SimpleOfdmWranPhy> m_simpleOfdmWranPhy;
   std::map<std::string, std::vector<double> > interferencePlusNoise; // in W
   std::map<std::string, std::vector<double> > capturedSignal; // in W
+  std::map<std::string, std::vector<double> > capturedSignalForFirstTime; // in W
   std::map<std::string, std::vector<double> > SINR; // in W
   std::set<std::string> pendingSenseResultList;
   std::set<std::string>::iterator pendingSenseResultListIterator;

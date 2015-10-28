@@ -35,6 +35,7 @@
 #define MAX_RADIO	3
 #define	MAX_CHANNELS 	1 //#modify to accomodate changes (he says dont modify, why ?)
 
+#define DEFAULT_CHANNEL 0 // default channel is 470 MHz.
 #define TOTAL_SUBCHANNEL 10
 #define MAX_ITERATION 2
 

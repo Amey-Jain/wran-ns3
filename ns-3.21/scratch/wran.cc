@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 120, schedType = 0, mxSS = 5, mxBS = 2;
+  int duration = 120, schedType = 0, mxSS = 5, mxBS = 1;
   WranHelper::SchedulerType scheduler = WranHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -187,7 +187,7 @@ int main (int argc, char *argv[])
 
   Ptr<ListPositionAllocator> positionAllocBS = CreateObject<ListPositionAllocator> ();
         positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate, 							10.0));
-        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate, 							10.0));
+//        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate, 							10.0));
 //        positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
@@ -333,7 +333,6 @@ int main (int argc, char *argv[])
 //	                                                            UlClassifierUgs);
 //	    ss[i]->AddWranServiceFlow (UlWranServiceFlowUgs);
 //  }
-
 
   AnimationInterface anim ("wireless-animation.xml"); // Mandatory
   uint32_t ssResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/ss.png");
