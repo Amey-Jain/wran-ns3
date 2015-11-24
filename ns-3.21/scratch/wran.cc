@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 120, schedType = 0, mxSS = 5, mxBS = 1;
+  int duration = 120, schedType = 0, mxSS = 12, mxBS = 3;
   WranHelper::SchedulerType scheduler = WranHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -83,10 +83,10 @@ int main (int argc, char *argv[])
 //  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
   LogComponentEnable("WranBaseStationNetDevice", LOG_LEVEL_INFO);
 //  LogComponentEnable("WranNetDevice", LOG_LEVEL_INFO);
-  LogComponentEnable("WranSubscriberStationNetDevice", LOG_LEVEL_INFO);
+//  LogComponentEnable("WranSubscriberStationNetDevice", LOG_LEVEL_INFO);
 //  LogComponentEnable("PropagationLossModel", LOG_LEVEL_INFO);
-  LogComponentEnable("CogSpectrumSensing", LOG_LEVEL_INFO);
-  LogComponentEnable("CogSpectrumManager", LOG_LEVEL_INFO);
+//  LogComponentEnable("CogSpectrumSensing", LOG_LEVEL_INFO);
+//  LogComponentEnable("CogSpectrumManager", LOG_LEVEL_INFO);
 //  LogComponentEnable("CogPUModel", LOG_LEVEL_INFO);
 
 
@@ -179,17 +179,17 @@ int main (int argc, char *argv[])
 
   // all units are in km. multiply 1000 to convert it to meter.
   double km = 1000.0;
-  double rowNeighbourBSOverlappingRegion = 10.0 * km;
-  double bsTransmissionRange = 30.0 * km;
+  double rowNeighbourBSOverlappingRegion = 5.0 * km; // previous value 10
+  double bsTransmissionRange = 10.0 * km;//previous value 30
   double bsToBsDistanceX = 2.0 * (bsTransmissionRange - rowNeighbourBSOverlappingRegion);
   double bsToBsDistanceY = bsToBsDistanceX * sin(45.0);
-  double startCoordinate = 15.0 * km;
+  double startCoordinate = 3.0 * km;//previous value 15
 
   Ptr<ListPositionAllocator> positionAllocBS = CreateObject<ListPositionAllocator> ();
         positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate, 							10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate, 							10.0));
-//        positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
-//        positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
+        positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
+        positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
 //        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
@@ -206,8 +206,8 @@ int main (int argc, char *argv[])
 ////                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=40000]")); // position radius
 
       std::string unRanVar("ns3::UniformRandomVariable[Min=");
-      double maxAreaX = startCoordinate + ( 2.0 * bsToBsDistanceX);
-      double maxAreaY = (/*2.0 */ startCoordinate) + bsToBsDistanceY / 2.0;
+      double maxAreaX = startCoordinate + ( /*2.0 */ bsToBsDistanceX);
+      double maxAreaY = (2.0 * startCoordinate) + bsToBsDistanceY / 1.0;
       sstreamX  << unRanVar << startCoordinate << "|Max=" << maxAreaX << "]";
       sstreamY  << unRanVar << startCoordinate << "|Max=" << maxAreaY << "]";
       mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",

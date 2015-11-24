@@ -155,56 +155,56 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
                               double txPowerDbm,
                               Ptr<PacketBurst> burst)
 {
-	NS_LOG_INFO("From ofdm Channel, txPower " << txPowerDbm);
-	Ptr<FriisPropagationLossModel> frii_loss = DynamicCast<FriisPropagationLossModel> (m_loss);
-	frii_loss->SetFrequency((double)frequency * 1000000.0);
-	NS_LOG_INFO("From ofdm Channel in Watt " << frii_loss->DbmToW(txPowerDbm) << " Freq " << frii_loss->GetFrequency());
-
-  double rxPowerDbm = 0;
-  Ptr<MobilityModel> senderMobility = 0;
-  Ptr<MobilityModel> receiverMobility = 0;
-  senderMobility = phy->GetDevice ()->GetNode ()->GetObject<MobilityModel> ();
-  WranSimpleOfdmSendParam * param;
-  for (std::list<Ptr<SimpleOfdmWranPhy> >::iterator iter = m_phyList.begin (); iter != m_phyList.end (); ++iter)
-    {
-      Time delay = Seconds (0);
-      if (phy != *iter)
-        {
-          double distance = 0;
-          receiverMobility = (*iter)->GetDevice ()->GetNode ()->GetObject<MobilityModel> ();
-          if (receiverMobility != 0 && senderMobility != 0 && m_loss != 0)
-            {
-              distance = senderMobility->GetDistanceFrom (receiverMobility);
-              delay =  Seconds (distance/300000000.0);
-              rxPowerDbm = m_loss->CalcRxPower (txPowerDbm, senderMobility, receiverMobility);
-//              if(distance > MAX_TRANSMISSION_RANGE)continue;
-            }
-
-          param = new WranSimpleOfdmSendParam (burstSize,
-                                           isFirstBlock,
-                                           frequency,
-                                           modulationType,
-                                           direction,
-                                           rxPowerDbm,
-                                           burst);
-          Ptr<Object> dstNetDevice = (*iter)->GetDevice ();
-          uint32_t dstNode;
-          if (dstNetDevice == 0)
-            {
-              dstNode = 0xffffffff;
-            }
-          else
-            {
-              dstNode = dstNetDevice->GetObject<NetDevice> ()->GetNode ()->GetId ();
-            }
-          Simulator::ScheduleWithContext (dstNode,
-                                          delay,
-                                          &SimpleOfdmWranChannel::EndSendDummyBlock,
-                                          this,
-                                          *iter,
-                                          param);
-        }
-    }
+//	NS_LOG_INFO("From ofdm Channel, txPower " << txPowerDbm);
+//	Ptr<FriisPropagationLossModel> frii_loss = DynamicCast<FriisPropagationLossModel> (m_loss);
+//	frii_loss->SetFrequency((double)frequency * 1000000.0);
+//	NS_LOG_INFO("From ofdm Channel in Watt " << frii_loss->DbmToW(txPowerDbm) << " Freq " << frii_loss->GetFrequency());
+//
+//  double rxPowerDbm = 0;
+//  Ptr<MobilityModel> senderMobility = 0;
+//  Ptr<MobilityModel> receiverMobility = 0;
+//  senderMobility = phy->GetDevice ()->GetNode ()->GetObject<MobilityModel> ();
+//  WranSimpleOfdmSendParam * param;
+//  for (std::list<Ptr<SimpleOfdmWranPhy> >::iterator iter = m_phyList.begin (); iter != m_phyList.end (); ++iter)
+//    {
+//      Time delay = Seconds (0);
+//      if (phy != *iter)
+//        {
+//          double distance = 0;
+//          receiverMobility = (*iter)->GetDevice ()->GetNode ()->GetObject<MobilityModel> ();
+//          if (receiverMobility != 0 && senderMobility != 0 && m_loss != 0)
+//            {
+//              distance = senderMobility->GetDistanceFrom (receiverMobility);
+//              delay =  Seconds (distance/300000000.0);
+//              rxPowerDbm = m_loss->CalcRxPower (txPowerDbm, senderMobility, receiverMobility);
+////              if(distance > MAX_TRANSMISSION_RANGE)continue;
+//            }
+//
+//          param = new WranSimpleOfdmSendParam (burstSize,
+//                                           isFirstBlock,
+//                                           frequency,
+//                                           modulationType,
+//                                           direction,
+//                                           rxPowerDbm,
+//                                           burst);
+//          Ptr<Object> dstNetDevice = (*iter)->GetDevice ();
+//          uint32_t dstNode;
+//          if (dstNetDevice == 0)
+//            {
+//              dstNode = 0xffffffff;
+//            }
+//          else
+//            {
+//              dstNode = dstNetDevice->GetObject<NetDevice> ()->GetNode ()->GetId ();
+//            }
+//          Simulator::ScheduleWithContext (dstNode,
+//                                          delay,
+//                                          &SimpleOfdmWranChannel::EndSendDummyBlock,
+//                                          this,
+//                                          *iter,
+//                                          param);
+//        }
+//    }
 
 }
 
@@ -226,6 +226,8 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
 	  Ptr<MobilityModel> receiverMobility = 0;
 	  senderMobility = phy->GetDevice ()->GetNode ()->GetObject<MobilityModel> ();
 	  WranSimpleOfdmSendParam * param;
+	  std::vector<double> tmpRxPowerW;
+	  tmpRxPowerW.resize(nrOfSubChannel, 0);
 
 	  for (std::list<Ptr<SimpleOfdmWranPhy> >::iterator iter = m_phyList.begin (); iter != m_phyList.end (); ++iter)
 		{
@@ -239,6 +241,7 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
 				  distance = senderMobility->GetDistanceFrom (receiverMobility);
 				  delay =  Seconds (distance/300000000.0);
 
+				  NS_LOG_INFO("Simple OFDM WRAN Channel " << txPowerListW->size());
 				  for(uint16_t subChannel = 0; subChannel < nrOfSubChannel; subChannel++)
 				  {
 //					NS_LOG_INFO("From ofdm Channel, txPower " << txPowerListW->at(subChannel));
@@ -250,9 +253,11 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
 						NS_LOG_INFO("From ofdm Channel in Watt " << txPowerListW->at(subChannel) << " Freq " << frii_loss->GetFrequency());
 
 						rxPowerDbm = m_loss->CalcRxPower (frii_loss->DbmFromW(txPowerListW->at(subChannel)), senderMobility, receiverMobility);
-						(*iter)->SetRxPowerSubChannel(subChannel, frii_loss->DbmToW(rxPowerDbm));
+//						(*iter)->SetRxPowerSubChannel(subChannel, frii_loss->DbmToW(rxPowerDbm));
+						tmpRxPowerW[subChannel] = frii_loss->DbmToW(rxPowerDbm);
 					} else {
-						(*iter)->SetRxPowerSubChannel(subChannel, 0.0);
+//						(*iter)->SetRxPowerSubChannel(subChannel, 0.0);
+						tmpRxPowerW[subChannel] = 0.0;
 					}
 				  }
 	//              if(distance > MAX_TRANSMISSION_RANGE)continue;
@@ -263,7 +268,7 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
 											   frequency,
 											   modulationType,
 											   direction,
-											   rxPowerDbm,
+											   tmpRxPowerW,
 											   burst);
 			  Ptr<Object> dstNetDevice = (*iter)->GetDevice ();
 			  uint32_t dstNode;

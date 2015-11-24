@@ -32,7 +32,8 @@ WranSimpleOfdmSendParam::WranSimpleOfdmSendParam (void)
   m_frequency = 0;
   m_modulationType = WranPhy::MODULATION_TYPE_QPSK_12;
   m_direction = 0;
-  m_rxPowerDbm = 0;
+  std::vector<double> newVector;
+  m_rxPowerDbm = newVector;
 
 }
 WranSimpleOfdmSendParam::WranSimpleOfdmSendParam (const bvec &fecBlock,
@@ -41,7 +42,7 @@ WranSimpleOfdmSendParam::WranSimpleOfdmSendParam (const bvec &fecBlock,
                                           uint64_t Frequency,
                                           WranPhy::ModulationType modulationType,
                                           uint8_t direction,
-                                          double rxPowerDbm)
+                                          std::vector<double> rxPowerDbm)
 {
 
   m_fecBlock = fecBlock;
@@ -50,7 +51,10 @@ WranSimpleOfdmSendParam::WranSimpleOfdmSendParam (const bvec &fecBlock,
   m_frequency = Frequency;
   m_modulationType = modulationType;
   m_direction = direction;
-  m_rxPowerDbm = rxPowerDbm;
+
+  std::vector<double> newVector;
+  m_rxPowerDbm = newVector;
+  std::copy(rxPowerDbm.begin(), rxPowerDbm.end(), std::back_inserter(m_rxPowerDbm));
 }
 
 WranSimpleOfdmSendParam::WranSimpleOfdmSendParam (uint32_t burstSize,
@@ -58,7 +62,7 @@ WranSimpleOfdmSendParam::WranSimpleOfdmSendParam (uint32_t burstSize,
                                           uint64_t Frequency,
                                           WranPhy::ModulationType modulationType,
                                           uint8_t direction,
-                                          double rxPowerDbm,
+                                          std::vector<double> rxPowerDbm,
                                           Ptr<PacketBurst> burst)
 {
   m_burstSize = burstSize;
@@ -66,7 +70,11 @@ WranSimpleOfdmSendParam::WranSimpleOfdmSendParam (uint32_t burstSize,
   m_frequency = Frequency;
   m_modulationType = modulationType;
   m_direction = direction;
-  m_rxPowerDbm = rxPowerDbm;
+
+  std::vector<double> newVector;
+  m_rxPowerDbm = newVector;
+  std::copy(rxPowerDbm.begin(), rxPowerDbm.end(), std::back_inserter(m_rxPowerDbm));
+
   m_burst = burst;
 }
 
@@ -107,9 +115,10 @@ WranSimpleOfdmSendParam::SetDirection (uint8_t direction)
   m_direction = direction;
 }
 void
-WranSimpleOfdmSendParam::SetRxPowerDbm (double rxPowerDbm)
+WranSimpleOfdmSendParam::SetRxPowerDbm (std::vector<double> rxPowerDbm)
 {
-  m_rxPowerDbm = rxPowerDbm;
+	m_rxPowerDbm.clear();
+  std::copy(rxPowerDbm.begin(), rxPowerDbm.end(), std::back_inserter(m_rxPowerDbm));
 }
 
 bvec
@@ -142,7 +151,7 @@ WranSimpleOfdmSendParam::GetDirection (void)
 {
   return m_direction;
 }
-double
+std::vector<double>
 WranSimpleOfdmSendParam::GetRxPowerDbm (void)
 {
   return m_rxPowerDbm;

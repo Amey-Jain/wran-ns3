@@ -40,6 +40,8 @@
 #include <algorithm>
 #include <utility>
 
+#define PDS std::pair<double, std::string>
+#define PDI std::pair<double, int>
 namespace ns3 {
 
 class Node;
@@ -236,6 +238,7 @@ public:
   void SetWranServiceFlowManager (Ptr<WranBsWranServiceFlowManager> );
 
 private:
+  void ScheduleForNextInterval(void);
   void ClearAllInformation (bool isClearFirstData);
 
   void SendCustomMessage (int nr_channel);
@@ -406,16 +409,25 @@ private:
   TracedCallback<Ptr<const Packet> > m_bsRxDropTrace;
 
   Ptr<SimpleOfdmWranPhy> m_simpleOfdmWranPhy;
+
+  double prePowerList[TOTAL_SUBCHANNEL];
+
   std::map<std::string, std::vector<double> > interferencePlusNoise; // in W
   std::map<std::string, std::vector<double> > capturedSignal; // in W
   std::map<std::string, std::vector<double> > capturedSignalForFirstTime; // in W
   std::map<std::string, std::vector<double> > SINR; // in W
+
   std::set<std::string> pendingSenseResultList;
   std::set<std::string>::iterator pendingSenseResultListIterator;
   std::vector<std::map<std::string, double> >relThList;
+
   std::map< std::string, int > assignedChannelList;
   std::vector< std::string > assignedSessionList;
+
+  std::vector< std::vector< PDS > > WList;
+  std::vector< PDI > WPList;
   Ptr<SpectrumManager> spectrumManager;
+
 };
 
 } // namespace ns3

@@ -109,7 +109,7 @@ public:
                      uint64_t frequency,
                      WranPhy::ModulationType modulationType,
                      uint8_t direction,
-                     double rxPower,
+                     std::vector<double> rxPower,
                      Ptr<PacketBurst> burst);
 
   /**

@@ -886,6 +886,7 @@ WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 			if(Mac48Address(messageBody.c_str()) == GetMacAddress()){
 				//its intended for me, send sensing result to BS
 				Simulator::ScheduleNow (&WranSubscriberStationNetDevice::SendSensingResult, this);
+//				NS_LOG_INFO("Need to send the sensing result");
 			}
 			return;
 		}

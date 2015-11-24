@@ -366,6 +366,7 @@ SimpleOfdmWranPhy::StartSendDummyFecBlock (bool isFirstBlock,
       isLastFecBlock = false;
     }
   NS_LOG_INFO("Before Sending");
+  NS_LOG_INFO("Wran Phy SubChannel Power: " << m_txPowerSubChannel[0] << "  " << m_txPowerSubChannel[1] << "  " << m_txPowerSubChannel[3] << "  " << m_txPowerSubChannel[4] << "  " << m_txPowerSubChannel[5] << "  " << m_txPowerSubChannel[6]);
   channel->Send (m_blockTime,
                  m_currentBurstSize,
                  this,
@@ -418,44 +419,51 @@ SimpleOfdmWranPhy::StartReceive (uint32_t burstSize,
                                   uint64_t frequency,
                                   WranPhy::ModulationType modulationType,
                                   uint8_t direction,
-                                  double rxPower,
+                                  std::vector<double> rxPower,
                                   Ptr<PacketBurst> burst)
 {
 	NS_LOG_INFO("Start Receiving from ofdm phy " << GetState());
 	NS_LOG_INFO("Freq " << frequency << " RxFreq " << GetRxFrequency());
   uint8_t drop = 0;
-  double Nwb = -114 + m_noiseFigure + 10 * std::log (GetBandwidth () / 1000000000.0) / 2.303;
-  double SNR = rxPower - Nwb;
-  SetRxPower(rxPower);
-  SNRToBlockErrorRateRecord * record = m_snrToBlockErrorRateManager->GetSNRToBlockErrorRateRecord (SNR, modulationType);
-  double I1 = record->GetI1 ();
-  double I2 = record->GetI2 ();
 
-  double blockErrorRate = m_URNG->GetValue (I1, I2);
+  int sz = rxPower.size();
+  for(int i = 0; i < sz; i++){
+	  SetRxPowerSubChannel(i,rxPower[i]);
+  }
 
-  double rand = m_URNG->GetValue (0.0, 1.0);
+//  double Nwb = -114 + m_noiseFigure + 10 * std::log (GetBandwidth () / 1000000000.0) / 2.303;
+//  double SNR = rxPower[0] - Nwb;
+//  SetRxPower(rxPower[0]);
 
-  if (rand < blockErrorRate)
-    {
-      drop = 1;
-    }
-  if (rand > blockErrorRate)
-    {
-      drop = 0;
-    }
+//  SNRToBlockErrorRateRecord * record = m_snrToBlockErrorRateManager->GetSNRToBlockErrorRateRecord (SNR, modulationType);
+//  double I1 = record->GetI1 ();
+//  double I2 = record->GetI2 ();
 
-  if (blockErrorRate == 1.0)
-    {
-      drop = 1;
-    }
-  if (blockErrorRate == 0.0)
-    {
-      drop = 0;
-    }
-  delete record;
+//  double blockErrorRate = m_URNG->GetValue (I1, I2);
 
-  NS_LOG_INFO ("PHY: Receive rxPower=" << rxPower << ", Nwb=" << Nwb << ", SNR=" << SNR << ", Modulation="
-                                       << modulationType << ", BlocErrorRate=" << blockErrorRate << ", drop=" << (int) drop);
+//  double rand = m_URNG->GetValue (0.0, 1.0);
+
+//  if (rand < blockErrorRate)
+//    {
+//      drop = 1;
+//    }
+//  if (rand > blockErrorRate)
+//    {
+//      drop = 0;
+//    }
+//
+//  if (blockErrorRate == 1.0)
+//    {
+//      drop = 1;
+//    }
+//  if (blockErrorRate == 0.0)
+//    {
+//      drop = 0;
+//    }
+//  delete record;
+
+//  NS_LOG_INFO ("PHY: Receive rxPower=" << rxPower << ", Nwb=" << Nwb << ", SNR=" << SNR << ", Modulation="
+//                                       << modulationType << ", BlocErrorRate=" << blockErrorRate << ", drop=" << (int) drop);
 
   switch (GetState ())
     {

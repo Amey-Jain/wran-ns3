@@ -499,6 +499,18 @@ WranBaseStationNetDevice::GetSymbolDuration (void) const
 }
 
 void
+WranBaseStationNetDevice::ScheduleForNextInterval(void) {
+	Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+	x->SetAttribute ("Min", DoubleValue (0.0));
+	x->SetAttribute ("Max", DoubleValue (5.0));
+	double backoffTime = x->GetValue ();
+//	NS_LOG_INFO("BS " << GetMacAddress() << " goes in backoff for duration: " << backoffTime << "s");
+
+	Time backoffTimer = Seconds(backoffTime);
+	Simulator::Schedule (backoffTimer ,&WranBaseStationNetDevice::GetSensingResultFromSS, this);
+}
+
+void
 WranBaseStationNetDevice::Start (void)
 {
   SetReceiveCallback ();
@@ -559,7 +571,8 @@ WranBaseStationNetDevice::AttachSpectrumManager (void)
 //		spectrumManager->SetPuModel(0.1, puModel);
 //
 //	}
-	Simulator::ScheduleNow (&WranBaseStationNetDevice::GetSensingResultFromSS, this);
+	ScheduleForNextInterval();
+//	Simulator::ScheduleNow (&WranBaseStationNetDevice::GetSensingResultFromSS, this);
 }
 
 void
@@ -668,7 +681,9 @@ WranBaseStationNetDevice::EndSendCustomMessage (void)
 
 void
 WranBaseStationNetDevice::ClearAllInformation (bool isClearFirstData) {
-	if(isClearFirstData)capturedSignalForFirstTime.clear();
+	if(isClearFirstData){
+		capturedSignalForFirstTime.clear();
+	}
 	interferencePlusNoise.clear();
 	capturedSignal.clear();
 	SINR.clear();
@@ -677,6 +692,10 @@ WranBaseStationNetDevice::ClearAllInformation (bool isClearFirstData) {
 
 	assignedChannelList.clear();
 	assignedSessionList.clear();
+
+	WList.clear();
+	WList.resize(GetSimpleOfdmWranPhy()->GetNumberOfSubChannel(), std::vector< PDS >());
+	WPList.clear();
 }
 
 
@@ -705,7 +724,7 @@ WranBaseStationNetDevice::SendSensingResultRequest (std::set<std::string>::itera
 	if(sit == pendingSenseResultList.end()) {
 		Time getSensingResultRetryInterval;
 		getSensingResultRetryInterval = Seconds(GET_SENSING_RESULT_RETRY_INTERVAL);
-		Simulator::Schedule (getSensingResultRetryInterval ,&WranBaseStationNetDevice::EndGetSensingResultFromSS, this);
+		Simulator::Schedule (getSensingResultRetryInterval, &WranBaseStationNetDevice::EndGetSensingResultFromSS, this);
 		return;
 	}
 
@@ -742,24 +761,30 @@ WranBaseStationNetDevice::EndGetSensingResultFromSS (void)
 			capturedSignalForFirstTime = capturedSignal;
 		}
 
-		PrintAllValue();
-		CalculateUtility();
+//		PrintAllValue();
+//		CalculateUtility();
 
 		MakeAssignChannelList();
 		AssignPowerToChannels();
 
-		if(iterationCount >= MAX_ITERATION)return;
+		double sum = 0.0, diff, a, b;
+		for(int i = 0; i < GetSimpleOfdmWranPhy()->GetNumberOfSubChannel(); i++){
+			a = GetSimpleOfdmWranPhy()->GetTxPowerSubChannel(i);
+			b = prePowerList[i];
+			diff = a - b;
+			if(diff < 0) diff *= -1.0;
+			diff /= (prePowerList[i]>0?prePowerList[i]:1);
+
+			sum += diff;
+		}
+
+		NS_LOG_INFO("In BS(" << GetMacAddress() << ") Iteration: " << iterationCount << " value: " << sum);
+		if(iterationCount >= MAX_ITERATION || fabs(sum-0.0)<(1e-7))return;
 		iterationCount++; // think about it. put it in more efficient place later.
 
 //		call here after a random time interval
-		Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-		x->SetAttribute ("Min", DoubleValue (0.0));
-		x->SetAttribute ("Max", DoubleValue (5.0));
-		double backoffTime = x->GetValue ();
-		NS_LOG_INFO("BS " << GetMacAddress() << " goes in backoff for duration: " << backoffTime << "s");
+		ScheduleForNextInterval();
 
-		Time backoffTimer = Seconds(REQUEST_TO_SENSE_RESULT_INTERVAL);
-		Simulator::Schedule (backoffTimer ,&WranBaseStationNetDevice::GetSensingResultFromSS, this);
 	} else {
 		NS_LOG_INFO("Retry GetSensingResultFromSS " << pendingSenseResultList.size());
 		Simulator::ScheduleNow (&WranBaseStationNetDevice::SendSensingResultRequest, this, pendingSenseResultList.begin());
@@ -991,7 +1016,7 @@ WranBaseStationNetDevice::HandleControlMessage (std::string msgBody, std::string
 				}
 				else if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
 					// sender mac
-					NS_LOG_INFO("Parsed Message in BS MAC:" << token);
+//					NS_LOG_INFO("Parsed Message in BS MAC:" << token);
 					bsMAC = token;
 				}
 				break;
@@ -999,7 +1024,7 @@ WranBaseStationNetDevice::HandleControlMessage (std::string msgBody, std::string
 			case 2:
 				if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
 					// channel number
-					NS_LOG_INFO("Parsed Message in BS NRCH:" << token);
+//					NS_LOG_INFO("Parsed Message in BS NRCH:" << token);
 					nr_channel = std::atoi(token.c_str());
 				}
 				break;
@@ -1007,7 +1032,7 @@ WranBaseStationNetDevice::HandleControlMessage (std::string msgBody, std::string
 			case 3:
 				if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
 					// sensed power
-					NS_LOG_INFO("Parsed Message in BS PWER:" << token);
+//					NS_LOG_INFO("Parsed Message in BS PWER:" << token);
 					rxValue = std::atof(token.c_str());
 
 					if(GetMacAddress() == Mac48Address(bsMAC.c_str())) { // this is my signal
@@ -1025,19 +1050,34 @@ WranBaseStationNetDevice::HandleControlMessage (std::string msgBody, std::string
 		i++;
 		if(i == 4)i = 1;
 	}
+
 	NS_LOG_INFO("Signal updating finished.");
 	if(msgType == MESSAGE_TYPE_SEND_PING) {
 
 		Simulator::ScheduleNow (&WranBaseStationNetDevice::ScheduleNextBroadcast, this, nr_channel);
 	} else if(msgType == MESSAGE_TYPE_SEND_SENSE_RESULT) {
 		NS_LOG_INFO("Message type send sense result");
+		uint16_t numberOfSubChannel = GetSimpleOfdmWranPhy()->GetNumberOfSubChannel();
+		double w, cs;
+//		Update WList
+		for(i = 0; i < numberOfSubChannel; i++){
+			if(interferencePlusNoise.count(senderMacAddress) && interferencePlusNoise[senderMacAddress][i] > 0) {
+				if(capturedSignalForFirstTime.count(senderMacAddress)) cs = capturedSignalForFirstTime[senderMacAddress][i];
+				else cs = 0.0;
+
+				w = cs / interferencePlusNoise[senderMacAddress][i];
+				WList[i].push_back(PDS(w, senderMacAddress));
+			}
+		}
+
+
+//		Calculate SINR
 		std::map<std::string, std::vector<double> >::iterator mit;
 		for(mit = capturedSignal.begin(); mit != capturedSignal.end(); mit++){
 			bool hasInterfered = true;
 			if(interferencePlusNoise.count(mit->first) == 0) {
 				hasInterfered = false;
 			}
-			uint16_t numberOfSubChannel = GetSimpleOfdmWranPhy()->GetNumberOfSubChannel();
 //			NS_LOG_INFO("Calculating SINR of: " << mit->first);
 			for(i = 0; i<numberOfSubChannel; i++){
 				double interferenceValue = hasInterfered?(interferencePlusNoise[mit->first][i]):(GetSimpleOfdmWranPhy()->CalculateNoiseW());
@@ -1179,37 +1219,54 @@ WranBaseStationNetDevice::UpdateRelativeTh(int nr_channel, std::string macAddres
 //		NS_LOG_INFO("rel throughput" << relThList[nr_channel][macAddress]);
 }
 
+bool WLSort(PDS a, PDS b)
+{
+  return a.first > b.first;
+}
+
+bool WPLSort(PDI a, PDI b)
+{
+  return a.first > b.first;
+}
+
 void
 WranBaseStationNetDevice::MakeAssignChannelList(){
+	NS_LOG_INFO("Trying to assign Channel");
 	assignedChannelList.clear();
 	assignedSessionList.clear();
 	assignedSessionList.resize(GetSimpleOfdmWranPhy()->GetNumberOfSubChannel(), "" );
+	WPList.clear();
 
 	std::map<std::string, std::vector<double> >::iterator sessionIt;
-	double mval, weight;
 	std::string macAddress;
+	int i, j, chInd, sz, wpSize;
 
-	for(int i = 0; i < GetSimpleOfdmWranPhy()->GetNumberOfSubChannel(); i++){
+	sz = GetSimpleOfdmWranPhy()->GetNumberOfSubChannel();
+	for(i = 0; i < sz; i++){
+		if(WList[i].size()) {
+			std::sort(WList[i].begin(),WList[i].end(), WLSort);
+			WPList.push_back(PDI(WList[i][0].first, i));
+		}
+	}
+	std::sort(WPList.begin(),WPList.end(), WPLSort);
+
+	wpSize = WPList.size();
+	for(i = 0; i < wpSize; i++){
 		macAddress.clear();
-//		NS_LOG_INFO("For channel << " << i);
-		bool isFirstTime = true;
-		for(sessionIt = capturedSignalForFirstTime.begin(); sessionIt != capturedSignalForFirstTime.end(); ++sessionIt){
-			if(assignedChannelList.find(sessionIt->first) != assignedChannelList.end())continue;
-			weight = sessionIt->second[i] / interferencePlusNoise[sessionIt->first][i];
-			if(isFirstTime){
-				mval = weight;
-				macAddress = sessionIt->first;
-				isFirstTime = false;
-			} else if(mval < weight){
-				mval = weight;
-				macAddress = sessionIt->first;
+		chInd = WPList[i].second;
+		sz = WList[chInd].size();
+
+		for(j = 0; j < sz; j++){
+			if(assignedChannelList.find( WList[chInd][j].second ) == assignedChannelList.end()){
+				macAddress = WList[chInd][j].second;
+				break;
 			}
-//			NS_LOG_INFO("here value : " << sessionIt->second  << " For session " << macAddress << " " << mval);
 		}
 		if(macAddress.empty())continue;
-		assignedChannelList[macAddress] = i;
-		assignedSessionList[i] = macAddress;
+		assignedChannelList[macAddress] = chInd;
+		assignedSessionList[chInd] = macAddress;
 	}
+
 	std::map< std::string, int >::iterator ait;
 	NS_LOG_INFO("For BS :" << GetMacAddress() << " Assigned Channel List");
 	for(ait = assignedChannelList.begin();ait != assignedChannelList.end(); ait++){
@@ -1219,28 +1276,45 @@ WranBaseStationNetDevice::MakeAssignChannelList(){
 
 void
 WranBaseStationNetDevice::AssignPowerToChannels() {
+	NS_LOG_INFO("Trying to calculate power");
 	uint16_t numberOfSubChannel = GetSimpleOfdmWranPhy()->GetNumberOfSubChannel();
 	double subChannelPower;
-	double alpha = 1.0;
-	double beta = 1.0;
 	double gainToINRatio = 0.0;
+	double H = 0.0;
+	double G = 0.0;
 
 	for(int i=0; i<numberOfSubChannel; i++){
+			subChannelPower = 0.0;
+			if(!assignedSessionList[i].empty()) {
+
+				gainToINRatio = CalculateGainToINRatio(	capturedSignalForFirstTime[ assignedSessionList[i] ][i],
+										P_MAX / numberOfSubChannel,
+										interferencePlusNoise[ assignedSessionList[i] ][i]);
+				H += (1/gainToINRatio);
+				G += (1/log(1+(P_MAX*gainToINRatio)));
+			}
+	}
+
+	for(uint16_t i=0; i<numberOfSubChannel; i++){
 		subChannelPower = 0.0;
 		if(!assignedSessionList[i].empty()) {
 
-			gainToINRatio = CalculateGainToINRatio(	capturedSignal[ assignedSessionList[i] ][i],
-									GetSimpleOfdmWranPhy()->GetTxPowerSubChannel((uint16_t)i),
+			gainToINRatio = CalculateGainToINRatio(	capturedSignalForFirstTime[ assignedSessionList[i] ][i],
+									P_MAX / numberOfSubChannel,
 									interferencePlusNoise[ assignedSessionList[i] ][i]);
 			NS_LOG_INFO("Gaint to IN Ratio : " << gainToINRatio << "(" << i << ")");
 
 
-			alpha = CalculateMAXThroughput(capturedSignal[ assignedSessionList[i] ][i], interferencePlusNoise[ assignedSessionList[i] ][i],i);
-			beta = 0.0001;
+//			alpha = CalculateMAXThroughput(capturedSignal[ assignedSessionList[i] ][i], interferencePlusNoise[ assignedSessionList[i] ][i],i);
+//			beta = 0.0001;
 
-			subChannelPower = ((alpha * P_MAX) / (beta * log(2) * log2(1+ (gainToINRatio * P_MAX) ))) - (1/gainToINRatio);
+//			subChannelPower = ((alpha * P_MAX) / (beta * log(2) * log2(1+ (gainToINRatio * P_MAX) ))) - (1/gainToINRatio);
+
+			subChannelPower = (P_MAX + H) / (G * log(1 + (P_MAX * gainToINRatio))) - (1/gainToINRatio);
 		}
 		subChannelPower = std::max(subChannelPower, 0.0);
+
+		prePowerList[i] = GetSimpleOfdmWranPhy()->GetTxPowerSubChannel(i);
 		GetSimpleOfdmWranPhy()->SetTxPowerSubChannel(i, subChannelPower);
 	 }
 

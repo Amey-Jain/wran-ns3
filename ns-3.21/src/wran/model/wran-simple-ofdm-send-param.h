@@ -40,11 +40,11 @@ public:
   WranSimpleOfdmSendParam (const bvec &fecBlock, uint32_t burstSize,
                        bool isFirstBlock, uint64_t Frequency,
                        WranPhy::ModulationType modulationType, uint8_t direction,
-                       double rxPowerDbm);
+                       std::vector<double> rxPowerDbm);
   WranSimpleOfdmSendParam (uint32_t burstSize,
                        bool isFirstBlock, uint64_t Frequency,
                        WranPhy::ModulationType modulationType, uint8_t direction,
-                       double rxPowerDbm, Ptr<PacketBurst> burst);
+                       std::vector<double> rxPowerDbm, Ptr<PacketBurst> burst);
   ~WranSimpleOfdmSendParam (void);
   /**
    * \brief sent the fec block to send
@@ -75,7 +75,7 @@ public:
   /**
    * \param rxPowerDbm the received power
    */
-  void SetRxPowerDbm (double rxPowerDbm);
+  void SetRxPowerDbm (std::vector<double> rxPowerDbm);
   /**
    * \return the fec block
    */
@@ -103,7 +103,7 @@ public:
   /**
    * \return the Received power
    */
-  double GetRxPowerDbm (void);
+  std::vector<double> GetRxPowerDbm (void);
   /**
    * \return the received burst
    */
@@ -116,7 +116,7 @@ private:
   uint64_t m_frequency;
   WranPhy::ModulationType m_modulationType;
   uint8_t m_direction;
-  double m_rxPowerDbm;
+  std::vector<double> m_rxPowerDbm;
   Ptr<PacketBurst> m_burst;
 
 };
