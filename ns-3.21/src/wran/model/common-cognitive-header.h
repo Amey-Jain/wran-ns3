@@ -36,10 +36,10 @@
 #define	MAX_CHANNELS 	1 //#modify to accomodate changes (he says dont modify, why ?)
 
 #define DEFAULT_CHANNEL 0 // default channel is 470 MHz.
-#define TOTAL_SUBCHANNEL 10
-#define MAX_ITERATION 10
+#define TOTAL_SUBCHANNEL 20
+#define MAX_ITERATION 100
 
-#define P_MAX 10 //in W, 40 dbm
+#define P_MAX 40.0 //in W, previous 10W
 #define NO_POWER 0 // in W, inf dbm
 
 #define MAX_TRANSMISSION_RANGE 30000 // 30km

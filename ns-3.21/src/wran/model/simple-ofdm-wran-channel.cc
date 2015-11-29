@@ -239,9 +239,11 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
 			  if (receiverMobility != 0 && senderMobility != 0 && m_loss != 0)
 				{
 				  distance = senderMobility->GetDistanceFrom (receiverMobility);
+				  if(distance > MAX_TRANSMISSION_RANGE)continue;
+
 				  delay =  Seconds (distance/300000000.0);
 
-				  NS_LOG_INFO("Simple OFDM WRAN Channel " << txPowerListW->size());
+//				  NS_LOG_INFO("Simple OFDM WRAN Channel " << txPowerListW->size());
 				  for(uint16_t subChannel = 0; subChannel < nrOfSubChannel; subChannel++)
 				  {
 //					NS_LOG_INFO("From ofdm Channel, txPower " << txPowerListW->at(subChannel));
@@ -260,7 +262,7 @@ SimpleOfdmWranChannel::Send (Time BlockTime,
 						tmpRxPowerW[subChannel] = 0.0;
 					}
 				  }
-	//              if(distance > MAX_TRANSMISSION_RANGE)continue;
+
 				}
 
 			  param = new WranSimpleOfdmSendParam (burstSize,

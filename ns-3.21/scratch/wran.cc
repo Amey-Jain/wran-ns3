@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
 {
   bool verbose = false;
 
-  int duration = 120, schedType = 0, mxSS = 12, mxBS = 3;
+  int duration = 120, schedType = 0, mxSS = 60, mxBS = 7;
   WranHelper::SchedulerType scheduler = WranHelper::SCHED_TYPE_SIMPLE;
 
   CommandLine cmd;
@@ -179,20 +179,20 @@ int main (int argc, char *argv[])
 
   // all units are in km. multiply 1000 to convert it to meter.
   double km = 1000.0;
-  double rowNeighbourBSOverlappingRegion = 5.0 * km; // previous value 10
-  double bsTransmissionRange = 10.0 * km;//previous value 30
+  double rowNeighbourBSOverlappingRegion = 10.0 * km; // previous value 10
+  double bsTransmissionRange = 30.0 * km;//previous value 30
   double bsToBsDistanceX = 2.0 * (bsTransmissionRange - rowNeighbourBSOverlappingRegion);
   double bsToBsDistanceY = bsToBsDistanceX * sin(45.0);
-  double startCoordinate = 3.0 * km;//previous value 15
+  double startCoordinate = 15.0 * km;//previous value 15
 
   Ptr<ListPositionAllocator> positionAllocBS = CreateObject<ListPositionAllocator> ();
         positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate, 							10.0));
-//        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate, 							10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate, 							10.0));
         positionAllocBS->Add (Vector (startCoordinate, 												startCoordinate + bsToBsDistanceY, 			10.0));
         positionAllocBS->Add (Vector (startCoordinate + bsToBsDistanceX, 							startCoordinate + bsToBsDistanceY, 			10.0));
-//        positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
-//        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
-//        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (2.0 * bsToBsDistanceX),					startCoordinate + bsToBsDistanceY, 			10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0), 					startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
+        positionAllocBS->Add (Vector (startCoordinate + (bsToBsDistanceX / 2.0) + bsToBsDistanceX, 	startCoordinate + (2.0 * bsToBsDistanceY), 	10.0));
         bsMobility.SetPositionAllocator (positionAllocBS);
 
       bsMobility.Install (bsNodes);
@@ -206,10 +206,10 @@ int main (int argc, char *argv[])
 ////                                   "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=40000]")); // position radius
 
       std::string unRanVar("ns3::UniformRandomVariable[Min=");
-      double maxAreaX = startCoordinate + ( /*2.0 */ bsToBsDistanceX);
-      double maxAreaY = (2.0 * startCoordinate) + bsToBsDistanceY / 1.0;
+      double maxAreaX = 2.0 * (startCoordinate + bsToBsDistanceX) - (startCoordinate / 1.0);
+      double maxAreaY = 2.0 * (startCoordinate + bsToBsDistanceY) - (startCoordinate / 2.0);
       sstreamX  << unRanVar << startCoordinate << "|Max=" << maxAreaX << "]";
-      sstreamY  << unRanVar << startCoordinate << "|Max=" << maxAreaY << "]";
+      sstreamY  << unRanVar << "7.0" << "|Max=" << maxAreaY << "]";
       mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
                                            "X", StringValue (sstreamX.str()),
                                            "Y", StringValue (sstreamY.str()));
@@ -362,15 +362,19 @@ int main (int argc, char *argv[])
     int chBS = -1, i, j;
 	for(j = 0; j < mxSS; ++j){
 		subscriberStationMobility = ss[j]->GetNode()->GetObject<MobilityModel> ();
-		std::stringstream cpeNameStream;
+		std::stringstream cpeNameStream, logStream;
 		cpeNameStream << "CPE";
-
+		logStream << "CPE";
 		distance = 0.0, mnDistance = maxAreaY;
+		chBS = -1;
 		for(i = 0; i < mxBS; ++i){
 		    baseStationMobility = bs[i]->GetNode()->GetObject<MobilityModel> ();
     		distance = baseStationMobility->GetDistanceFrom (subscriberStationMobility);
 
-    		if(distance < mnDistance) {
+    		if(distance <= MAX_TRANSMISSION_RANGE){
+    			logStream << " " << distance << "(" << i << ")";
+    		}
+    		if(distance <= MAX_TRANSMISSION_RANGE && distance < mnDistance) {
     			chBS = i;
     			mnDistance = distance;
     		}
@@ -379,10 +383,12 @@ int main (int argc, char *argv[])
 //    			break;
 //    		}
     	}
-		if(i>=mxBS){
+		if(chBS > -1){
 			i = chBS;
-		}
+		} else continue;
 		cpeNameStream << i;
+		logStream << i;
+		NS_LOG_INFO(logStream.str());
 		ss[j]->SetMyBSMAC(bs[i]->GetMacAddress());
 		bs[i]->GetWranSSManager()->CreateWranSSRecord(ss[j]->GetMacAddress());
 		anim.UpdateNodeDescription (ss[j]->GetNode(), cpeNameStream.str());
