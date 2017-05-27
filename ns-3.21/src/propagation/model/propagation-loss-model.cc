@@ -267,7 +267,7 @@ FriisPropagationLossModel::DoCalcRxPower (double txPowerDbm,
       return txPowerDbm - m_minLoss;
     }
   double numerator = m_lambda * m_lambda;
-  double denominator = 16 * PI * PI * distance * distance * m_systemLoss;
+  double denominator = 16 * PI * PI * distance * distance * distance * m_systemLoss;
   double lossDb = -10 * log10 (numerator / denominator);
   NS_LOG_DEBUG ("distance=" << distance<< "m, loss=" << lossDb <<"dB");
   return txPowerDbm - std::max (lossDb, m_minLoss);

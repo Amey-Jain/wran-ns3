@@ -873,11 +873,11 @@ WranSubscriberStationNetDevice::DoReceive (Ptr<Packet> packet)
 	Ptr<SimpleOfdmWranPhy> wranPhy = DynamicCast<SimpleOfdmWranPhy> (GetPhy());
 	InsertIntoBSRxList(senderMacAddress, wranPhy->GetRxPowerListSubChannel());
 	std::stringstream printstream;
-	printstream << "Updated rx list at SS: " << senderMacAddress;
+	printstream << "Updated rx list at SS ( " << GetMacAddress() << " ): "  << senderMacAddress;
 	for(uint16_t i = 0; i< wranPhy->GetNumberOfSubChannel();i++){
 		printstream << " " << bsRxList[senderMacAddress][i];
 	}
-	NS_LOG_INFO(printstream.str());
+	NS_LOG_DEBUG(printstream.str());
 
 
 	NS_LOG_INFO("Received packet message at SS: " << ms);

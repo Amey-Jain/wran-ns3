@@ -538,7 +538,7 @@ WranBaseStationNetDevice::Start (void)
   uint16_t numberOfSubChannel = GetSimpleOfdmWranPhy()->GetNumberOfSubChannel();
   double subChannelPower = P_MAX / (double)numberOfSubChannel;
   ss << "Total Number of SubChannel: " << numberOfSubChannel << " Each SubChannel Power: " << subChannelPower << " W.";
-  NS_LOG_INFO(ss.str());
+  NS_LOG_DEBUG(ss.str());
   for(int i=0; i<numberOfSubChannel; i++){
 	  GetSimpleOfdmWranPhy()->SetTxPowerSubChannel(i, subChannelPower);
 //	  assignedTxPower[i] = P_MAX - 22;
@@ -546,7 +546,7 @@ WranBaseStationNetDevice::Start (void)
 
   iterationCount = 0;
 //  Start the bs by attaching spectrum manager
-  NS_LOG_INFO("Sub-Channel Bandwidth: " << GetSimpleOfdmWranPhy()->GetSubChannelBandwidth());
+  NS_LOG_DEBUG("Sub-Channel Bandwidth: " << GetSimpleOfdmWranPhy()->GetSubChannelBandwidth());
 //  ClearAllInformation(true);
   Simulator::ScheduleNow (&WranBaseStationNetDevice::AttachSpectrumManager, this);
 
@@ -1163,13 +1163,14 @@ WranBaseStationNetDevice::CalculateUtility(void){
 //		alpha = mTh;
 //		beta = 0;
 
-		double util = (alpha * (th / mTh)) - (beta * ( dbmToW(GetSimpleOfdmWranPhy()->GetTxPowerSubChannel(i)) / dbmToW(P_MAX) ));
+		double util = (alpha * (th / mTh)) - (beta * ( GetSimpleOfdmWranPhy()->GetTxPowerSubChannel(i) / P_MAX ));
 		UpdateRelativeTh(i, assignedSessionList[i], util);
 		NS_LOG_INFO("Calculated Utility: " << i << " (" << assignedSessionList[i] << ")Util: " << util << " Th: " << th);
 	}
 	if(cnt){
+		double tot = avgTh;
 		avgTh /= cnt;
-		NS_LOG_INFO("Average Throughput in BS (" << GetMacAddress() << "): " << avgTh);
+		NS_LOG_INFO("Average Throughput in BS (" << GetMacAddress() << "): " << avgTh << " Total: " << tot);
 	}
 //
 //
@@ -1274,6 +1275,16 @@ WranBaseStationNetDevice::MakeAssignChannelList(){
 		}
 	}
 	std::sort(WPList.begin(),WPList.end(), WPLSort);
+
+//	NS_LOG_INFO("WList elements");
+//	for(i=0;i<sz;i++){
+//		std::stringstream ss;
+//		int szj = WList[i].size();
+//		for(j=0;j<szj;j++){
+//			ss << " " << WList[i][j].first << "(" << WList[i][j].second << ")";
+//		}
+//		NS_LOG_INFO(ss.str());
+//	}
 
 	wpSize = WPList.size();
 	for(i = 0; i < wpSize; i++){

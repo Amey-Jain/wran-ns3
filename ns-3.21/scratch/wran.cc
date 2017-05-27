@@ -83,7 +83,7 @@ int main (int argc, char *argv[])
 //  LogComponentEnable("WranPhy", LOG_LEVEL_INFO);
   LogComponentEnable("WranBaseStationNetDevice", LOG_LEVEL_INFO);
 //  LogComponentEnable("WranNetDevice", LOG_LEVEL_INFO);
-//  LogComponentEnable("WranSubscriberStationNetDevice", LOG_LEVEL_INFO);
+//  LogComponentEnable("WranSubscriberStationNetDevice", LOG_LEVEL_DEBUG);
 //  LogComponentEnable("PropagationLossModel", LOG_LEVEL_INFO);
 //  LogComponentEnable("CogSpectrumSensing", LOG_LEVEL_INFO);
 //  LogComponentEnable("CogSpectrumManager", LOG_LEVEL_INFO);
@@ -179,7 +179,7 @@ int main (int argc, char *argv[])
 
   // all units are in km. multiply 1000 to convert it to meter.
   double km = 1000.0;
-  double rowNeighbourBSOverlappingRegion = 10.0 * km; // previous value 10
+  double rowNeighbourBSOverlappingRegion = 15.0 * km; // previous value 10
   double bsTransmissionRange = 30.0 * km;//previous value 30
   double bsToBsDistanceX = 2.0 * (bsTransmissionRange - rowNeighbourBSOverlappingRegion);
   double bsToBsDistanceY = bsToBsDistanceX * sin(45.0);
@@ -335,20 +335,22 @@ int main (int argc, char *argv[])
 //  }
 
   AnimationInterface anim ("wireless-animation.xml"); // Mandatory
-  uint32_t ssResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/ss.png");
-  uint32_t bsResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/bs.png");
-    for (uint32_t i = 0; i < ssNodes.GetN (); ++i)
-      {
-    	anim.UpdateNodeImage(ssNodes.Get(i)->GetId(), ssResource);
-        anim.UpdateNodeDescription (ssNodes.Get (i), "CPE"); // Optional
-//        anim.UpdateNodeColor (ssNodes.Get (i), 255, 0, 0); // Optional
-      }
-    for (uint32_t i = 0; i < bsNodes.GetN (); ++i)
-      {
-    	anim.UpdateNodeImage(bsNodes.Get(i)->GetId(), bsResource);
-        anim.UpdateNodeDescription (bsNodes.Get (i), "BS"); // Optional
-//        anim.UpdateNodeColor (bsNodes.Get (i), 0, 255, 0); // Optional
-      }
+//  uint32_t ssResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/ss.png");
+//  uint32_t bsResource = anim.AddResource("/home/sayefsakin/Documents/ns-allinone-3.21/ns-3.21/ns3/bs.png");
+//    for (uint32_t i = 0; i < ssNodes.GetN (); ++i)
+//      {
+////    	anim.UpdateNodeImage(ssNodes.Get(i)->GetId(), ssResource);
+////        anim.UpdateNodeDescription (ssNodes.Get (i), "CPE"); // Optional
+//        anim.UpdateNodeSize(ssNodes.Get(i)->GetId(),1000000.0,1000000.0);
+////        anim.UpdateNodeColor (ssNodes.Get (i), 255, 0, 0); // Optional
+//      }
+//    for (uint32_t i = 0; i < bsNodes.GetN (); ++i)
+//      {
+////    	anim.UpdateNodeImage(bsNodes.Get(i)->GetId(), bsResource);
+////        anim.UpdateNodeDescription (bsNodes.Get (i), "BS"); // Optional
+//        anim.UpdateNodeSize(bsNodes.Get(i)->GetId(),1000000.0,1000000.0);
+////        anim.UpdateNodeColor (bsNodes.Get (i), 0, 255, 0); // Optional
+//      }
 
     anim.EnablePacketMetadata (); // Optional
 //    anim.EnableIpv4L3ProtocolCounters (Seconds (0), Seconds (10)); // Optional
@@ -388,9 +390,10 @@ int main (int argc, char *argv[])
 		} else continue;
 		cpeNameStream << i;
 		logStream << i;
-		NS_LOG_INFO(logStream.str());
+//		NS_LOG_INFO(logStream.str());
 		ss[j]->SetMyBSMAC(bs[i]->GetMacAddress());
 		bs[i]->GetWranSSManager()->CreateWranSSRecord(ss[j]->GetMacAddress());
+		NS_LOG_INFO("BS Association " << bs[i]->GetMacAddress() << " <- " << ss[j]->GetMacAddress());
 		anim.UpdateNodeDescription (ss[j]->GetNode(), cpeNameStream.str());
     }
 

@@ -37,7 +37,7 @@
 
 #define DEFAULT_CHANNEL 0 // default channel is 470 MHz.
 #define TOTAL_SUBCHANNEL 20
-#define MAX_ITERATION 100
+#define MAX_ITERATION 20
 
 #define P_MAX 40.0 //in W, previous 10W
 #define NO_POWER 0 // in W, inf dbm
